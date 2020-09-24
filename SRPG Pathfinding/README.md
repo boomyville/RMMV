@@ -9,3 +9,5 @@ Issues at the moment that are unlikely to be resolved:
 Upcoming fixes:
 - Add in pathfinding for regions (units currently will move to the higher/lower region if its within range and stand still if not; with some changes to how region pathfinding occurs, we can make units move towards higher/lower regions even if the next region is outside the unit's current movement range)
 - Change pathfinding such that if no path is found, it defaults to the RMMV pathfinding (this would potentially solve pathfinding with limited passability)
+
+![](https://github.com/boomyville/RMMV/blob/master/SRPG%20Pathfinding/Pathfinding_example.gif)
