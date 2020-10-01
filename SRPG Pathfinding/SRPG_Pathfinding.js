@@ -181,7 +181,6 @@
 
                 // track distance to nearest units
                 var path = otherEvent.pathTo(x, y);
-                console.log(path);
                 if (path.length > 0) {
                     var dist = -path.length;
                 } else if (!path && _fallbackMovement) {
