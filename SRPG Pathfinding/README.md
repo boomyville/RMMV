@@ -45,6 +45,15 @@ This works on open big maps but fails when there is even a bit of map complexity
 * ADJACENTREGION results in the unit moving to tile with region 1 (as current unit is undefined or 0). Once in region 1, it will move to region 0 or 2 (random). If it could not move to an adjacent region, it will move randomly within its own region
 * DIFFERENTREGION results in the unit moving to tile with region 1 or 4 (as current unit is undefined or 0). Next turn it will move to a different region if possible; if not then it will move randomly within its own region
 
+## How does fallback movement work?
+
+![](https://github.com/boomyville/RMMV/blob/master/SRPG%20Pathfinding/Pathfinding_fallback.png)
+
+* Fallback Movement means if no target is reachable (aka units are behind a gate that is closed), then movement methodlogy will change (eg. Nearest foe to Random)
+* Fallback Pathfinding means if no target is reachable, the game will find the shortest path to the tile closest to the target (eg. move towards foe still)
+* If fallback movement is set, fallback pathfinding will not occur
+* If movement is set to Aimless or Stand, then fallback will never occur (as these movement options technically never fail) 
+
 ## Issues at the moment that are unlikely to be resolved:
 - Pathfinding assumes any tile with limited passability to be "impassable" which means pathfinding along narrow bridges or cliffs may result in "no path found" and result in units not moving as a result
 
