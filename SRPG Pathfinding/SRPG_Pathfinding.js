@@ -7,7 +7,7 @@
  * 
  * @param Movement AI
  * @desc Default method for choosing where to move if no target is in range. Include JITTER_X to add movement variance
- * @default NEARESTFOE JITTER_1
+ * @default "NEARESTFOE"
  * 
  * @param Max Distance
  * @desc If no path found within X steps, then fallback movement AI occurs
@@ -31,11 +31,7 @@
  * @param Fallback Movement AI
  * @desc If no valid targets, use fallback movement AI. Best set to "STAND"/"RANDOM" (which never fail) or false
  * @default false
- * 
- * @param Default Region ID
- * @desc Set unregioned tiles to default region ID for pathfinding purposes. Set to false to ignore unregioned tiles.
- * @default false
- * 
+ *
  * @help
  * This plugin is a work in progress!
  * Credits to: Dopan, Dr. Q, Greg Trowbridge, Traverse, SoulPour777
@@ -106,7 +102,6 @@
     var _maxDistance = eval(parameters['Max Distance']) || 100;
     var _fallbackPathfinding = eval(parameters['Fallback Pathfinding']);
     var _fallbackMovementAI = eval(parameters['Fallback Movement AI']);
-    var _defaultRegion = eval(parameters['Default Region ID']);
     var _loopLimit = parameters['AI Loop Cycles']; //How many loops to do before giving up on selecting a valid random tile 
 
     //credit to Traverse of RPG Maker Central Forums for the above scriplet via SoulPour777 RPG Maker MV scripting tutorial video
