@@ -29,7 +29,7 @@
  * @default true
  * 
  * @param Fallback Movement AI
- * @desc If no valid targets, use fallback movement AI. Best set to "STAND"/"RANDOM" (which never fail) or false
+ * @desc If no valid targets, use fallback movement AI. Best set to "STAND"/"AIMLESS" (which never fail) or false
  * @default false
  *
  * @help
