@@ -56,7 +56,7 @@ a.forward(X);
 b.event().requestAnimation(Y);
 </Post-Damage Eval>
 
-This is a cleaner look as animation occurs AFTER movement and movement towards the target will always happen even if the skill "misses" 
+This results in movement towards the target  always happening even if the skill "misses" 
 
 By having this script active, the user's move speed and character animation will be reset; that is  a.event()._moveSpeed, a.event()._stepAnime and  a.event()._walkAnime values.
 moveSpeed controls how fast the unit moves. Above 8 makes movement near instanteous (in which case just use teleport function provided by srpg_PositionEffects.js)
