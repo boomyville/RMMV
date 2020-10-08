@@ -18,7 +18,7 @@ If we use Yanfly Skill core, we have the same issue as <After Eval> occur prior 
 The fix is to make srpg_Core reset movespeed at the end of an action (which happens once a.forward(x) AND battle sequence completes)
 This results in the following:
 
-![](https://github.com/boomyville/RMMV/blob/masterSRPG%20Event%20Reset%20After%20Action/Rush_Skill.gif) 
+![](https://github.com/boomyville/RMMV/blob/master/SRPG%20Event%20Reset%20After%20Action/Rush_Skill.gif?raw=true) 
 
 # How to create a rush skill
 
