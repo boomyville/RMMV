@@ -31,7 +31,11 @@
  * @param Fallback Movement AI
  * @desc If no valid targets, use fallback movement AI. Best set to "STAND"/"AIMLESS" (which never fail) or false
  * @default false
- *
+ * 
+ * @param Default Region ID
+ * @desc Set unregioned tiles to default region ID for pathfinding purposes. Set to false to ignore unregioned tiles.
+ * @default false
+ * 
  * @help
  * This plugin is a work in progress!
  * Credits to: Dopan, Dr. Q, Greg Trowbridge, Traverse, SoulPour777
@@ -66,23 +70,22 @@
  * 4. No targets exist - Use fallback movement AI if set; otherwise no movement
  * 
  * Tag Usage (Actor/Enemy and Class):
- * <movementAI: "STRING STRING_X STRING_Y"> Split different strings with spaces
- * STRING must be encapsulated with double/single quotation marks " "
- * STRING can be one of the following:
- * "STAND" - Unit stands still (unless applicable target within range)
- * "AIMLESS" - Units moves to a random space within its move range. If no space is free then it will stand still
- * "NEARESTFOE" - Units move to nearest target on the opposing team.
- * "NEARESTFRIEND" - Units move to nearest target on the same team.
- * "FARTHESTFOE" - Units move to the farthest target on the opposing team. Not too useful as once the unit gets closer, the farthest foe will no longer be the farthest foe.
- * "FARTHESTFRIEND" - Units move to the farthest  target on the same team. Not too useful as once the unit gets closer, the farthest friend will no longer be the farthest friend.
- * "RANDOMFOE" - Units move towards a random target on the opposing team. This changes every turn and will result in eratic behaviour if opposing team's units are spread out.
- * "RANDOMFRIEND" - Units move  towards a random target on the same team. This changes every turn and will result in eratic behaviour if the same team's units are spread out 
- * "CURRENTREGION" - Units will move randomly but only within the current region that is is. This can be altered by attacks/effects that move units 
- * "REGION_X" - Units will move towards nearest tile of region X if they are not in region X, otherwise they will follow CURRENTREGION movement algorithm.
- * "ADJACENTREGION" - Units will to a region +/- 1 of the current one. If they cannot find an adjacent region within range, they will follow CURRENT REGION movement algorithm. 
- * "DIFFERENTREGION" - Units will move to any square randomly with a different region to current. If they cannot find any valid options, RANDOM movement algorithm will be followed. 
- * "POINT_X_Y" - Units will move towards map coordinates X, Y. If they are at X,Y then STAND movement algorithm will be followed 
- * "AREA_X_Y_Z" - Units will move towards map coordinates X, Y. If they are within Z tiles of X,Y then RANDOM movement algorithm will be followed [NOT IMPLEMENTED YET]
+ * <movementAI: X Y> X is a string and represents the primary movement AI, Y can be a modifier (jitter)
+ * X can be one of the following (if multiple are included, the priority is based off the list below with highest priority given to the higher placed movement method)
+ * STAND - Unit stands still (unless applicable target within range)
+ * AIMLESS - Units moves to a random space within its move range. If no space is free then it will stand still
+ * NEARESTFOE - Units move to nearest target on the opposing team.
+ * NEARESTFRIEND - Units move to nearest target on the same team.
+ * FARTHESTFOE - Units move to the farthest target on the opposing team. Not too useful as once the unit gets closer, the farthest foe will no longer be the farthest foe.
+ * FARTHESTFRIEND - Units move to the farthest  target on the same team. Not too useful as once the unit gets closer, the farthest friend will no longer be the farthest friend.
+ * RANDOMFOE - Units move towards a random target on the opposing team. This changes every turn and will result in eratic behaviour if opposing team's units are spread out.
+ * RANDOMFRIEND - Units move  towards a random target on the same team. This changes every turn and will result in eratic behaviour if the same team's units are spread out 
+ * CURRENTREGION - Units will move randomly but only within the current region that is is. This can be altered by attacks/effects that move units 
+ * REGION_X - Units will move towards nearest tile of region X if they are not in region X, otherwise they will follow CURRENTREGION movement algorithm.
+ * ADJACENTREGION - Units will to a region +/- 1 of the current one. If they cannot find an adjacent region within range, they will follow CURRENT REGION movement algorithm. 
+ * DIFFERENTREGION - Units will move to any square randomly with a different region to current. If they cannot find any valid options, RANDOM movement algorithm will be followed. 
+ * POINT_X_Y - Units will move towards map coordinates X, Y. If they are at X,Y then STAND movement algorithm will be followed 
+ * AREA_X_Y_Z - Units will move towards map coordinates X, Y. If they are within Z tiles of X,Y then RANDOM movement algorithm will be followed [NOT IMPLEMENTED YET]
  * 
  * Other tags that can be included in movementAI:
  * JITTER_X - Unit moves X tiles randomly from "best route". Adds randomness to movement whilst still approaching targets. Default is 0 jitter; max jitter is srpgMove - 1.
@@ -91,24 +94,20 @@
  * - Treats tiles with limited passability as impassable (this can cause the path finding algorithm to fail when it comes to narrow cliffs)
  *
  */
-(function() {
-
+(function () {
     var substrBegin = document.currentScript.src.lastIndexOf('/');
     var substrEnd = document.currentScript.src.indexOf('.js');
     var scriptName = document.currentScript.src.substring(substrBegin + 1, substrEnd);
     var parameters = PluginManager.parameters(scriptName);
-
     var _movementAI = parameters['Movement AI'] || 'nearestFoe';
     var _maxDistance = eval(parameters['Max Distance']) || 100;
     var _fallbackPathfinding = eval(parameters['Fallback Pathfinding']);
     var _fallbackMovementAI = eval(parameters['Fallback Movement AI']);
     var _loopLimit = parameters['AI Loop Cycles']; //How many loops to do before giving up on selecting a valid random tile 
-
+    //var _defaultRegion = eval(parameters['Default Region ID']);
     //credit to Traverse of RPG Maker Central Forums for the above scriplet via SoulPour777 RPG Maker MV scripting tutorial video
-
     //Find the shortest path based on starting coordinates, target coordinates and the grid 
-    Game_Map.prototype.findShortestPath = function(startCoordinates, grid) {
-
+    Game_Map.prototype.findShortestPath = function (startCoordinates, grid) {
         var distanceFromTop = startCoordinates[0];
         var distanceFromLeft = startCoordinates[1];
         // Each "location" will store its coordinates
@@ -119,15 +118,12 @@
             path: [],
             status: 'Start'
         };
-
         // Initialize the queue with the start location already inside
         var queue = [location];
-
         // Loop through the grid searching for the goal
         while (queue.length > 0) {
             // Take the first location off the queue
             var currentLocation = queue.shift();
-
             var directions = ["Left", "Down", "Right", "Up"];
             for (dir in directions) {
                 var newLocation = this.exploreInDirection(currentLocation, directions[dir], grid);
@@ -136,28 +132,19 @@
                 } else if (newLocation.status === 'Valid') {
                     queue.push(newLocation);
                 }
-
             }
         }
-
         return false;
-
     };
-
     // This function will check a location's status
     // (a location is "valid" if it is on the grid, is not an "obstacle",
     // and has not yet been visited by our algorithm)
     // Returns "Valid", "Invalid", "Blocked", or "Goal"
-    Game_Map.prototype.locationStatus = function(location, grid) {
+    Game_Map.prototype.locationStatus = function (location, grid) {
         var gridSize = grid.length;
         var dft = location.distanceFromTop;
         var dfl = location.distanceFromLeft;
-
-        if (location.distanceFromLeft < 0 ||
-            location.distanceFromLeft >= gridSize ||
-            location.distanceFromTop < 0 ||
-            location.distanceFromTop >= gridSize) {
-
+        if (location.distanceFromLeft < 0 || location.distanceFromLeft >= gridSize || location.distanceFromTop < 0 || location.distanceFromTop >= gridSize) {
             // location is not on the grid--return false
             return 'Invalid';
         } else if (grid[dft][dfl] === 'Goal') {
@@ -169,15 +156,12 @@
             return 'Valid';
         }
     };
-
     // Explores the grid from the given location in the given direction
-    Game_Map.prototype.exploreInDirection = function(currentLocation, direction, grid) {
+    Game_Map.prototype.exploreInDirection = function (currentLocation, direction, grid) {
         var newPath = currentLocation.path.slice();
         newPath.push(direction);
-
         var dft = currentLocation.distanceFromTop;
         var dfl = currentLocation.distanceFromLeft;
-
         if (direction === 'Left') {
             dft -= 1;
         } else if (direction === 'Down') {
@@ -187,7 +171,6 @@
         } else if (direction === 'Up') {
             dfl -= 1;
         }
-
         var newLocation = {
             distanceFromTop: dft,
             distanceFromLeft: dfl,
@@ -195,17 +178,14 @@
             status: 'Unknown'
         };
         newLocation.status = this.locationStatus(newLocation, grid);
-
         // If this new location is valid, mark it as 'Visited'
         if (newLocation.status === 'Valid') {
             grid[newLocation.distanceFromTop][newLocation.distanceFromLeft] = 'Visited';
         }
-
         return newLocation;
     };
-
     // Check tile passability (incorporates SRPG obstacles)
-    Game_Map.prototype.checkTileValidity = function(x, y) {
+    Game_Map.prototype.checkTileValidity = function (x, y) {
         check = true;
         for (var i = 0; i < $gameMap.eventsXyNt(x, y).length; i++) {
             if ($gameMap.eventsXyNt(x, y)[i].isType() == "actor" || $gameMap.eventsXyNt(x, y)[i].isType() == "enemy") {
@@ -215,14 +195,12 @@
         }
         return check;
     }
-
     //Convert a pathfinding array of directions to a target coordinate 
-    Game_Map.prototype.pathToCoordinate = function(x, y, path, range, jitter) {
+    Game_Map.prototype.pathToCoordinate = function (x, y, path, range, jitter, terrainId) {
         var nextX = x;
         var nextY = y;
         var lastValidX = x;
         var lastValidY = y;
-
         for (var i = 0; i < range && path.length > 0; i++) {
             if (path[0] == "Right") {
                 nextX++;
@@ -251,24 +229,23 @@
             }
             path.shift();
         }
-
         //Check if route can be optimised if best route cannot be taken 
         if (!(nextX == lastValidX && nextY == lastValidY)) {
-            var pathDifference = $gameMap.pathTo(nextX, nextY, lastValidX, lastValidY).length;
+            var pathDifference = $gameMap.pathTo(nextX, nextY, lastValidX, lastValidY, terrainId).length;
             if (pathDifference > 1) {
                 //Cycle through all adjacent tiles next to optimal [X, Y] (nextX, nextY) and see if they are closer to optimal [X, Y] than default option of [lastValidX, lastValidY]
                 for (var i = Math.max(0, nextX - pathDifference); i <= Math.min($gameMap.width(), nextX + pathDifference) && pathDifference > 1; i++) {
                     for (var j = Math.max(0, nextY - pathDifference); j <= Math.min($gameMap.height(), nextY + pathDifference) && pathDifference > 1; j++) {
                         //Check if square is reachable 
-                        if ($gameMap.pathTo(x, y, i, j).length <= range) {
+                        if ($gameMap.pathTo(x, y, i, j, terrainId).length <= range) {
                             //Check if square is valid as a destination
                             if (this.checkTileValidity(i, j)) {
                                 //Check if this square is closer to our optimal [X, Y] than the current option
-                                if ($gameMap.pathTo(nextX, nextY, i, j).length < pathDifference) {
+                                if ($gameMap.pathTo(nextX, nextY, i, j, terrainId).length < pathDifference) {
                                     //Set these coordinates as the new lastValidX and lastValidY values
                                     lastValidX = i;
                                     lastValidY = j;
-                                    pathDifference = $gameMap.pathTo(nextX, nextY, i, j).length;
+                                    pathDifference = $gameMap.pathTo(nextX, nextY, i, j, terrainId).length;
                                 }
                             }
                         }
@@ -276,7 +253,6 @@
                 }
             }
         }
-
         //Add in jitter
         if (jitter !== false && jitter > 0) {
             var jitterArray = Array.from(Array(jitter * 2 + 1).keys());
@@ -284,8 +260,8 @@
             while (limit > 0) {
                 var randomX = jitterArray[Math.floor(Math.random() * jitterArray.length)] - jitter;
                 var randomY = jitterArray[Math.floor(Math.random() * jitterArray.length)] - jitter;
-                var currentPath = $gameMap.pathTo(x, y, lastValidX, lastValidY);
-                var path = $gameMap.pathTo(x, y, nextX + randomX, nextY + randomY);
+                var currentPath = $gameMap.pathTo(x, y, lastValidX, lastValidY, terrainId);
+                var path = $gameMap.pathTo(x, y, nextX + randomX, nextY + randomY, terrainId);
                 if (path.length > 0 && path.length <= range && currentPath.length <= path.length && $gameMap.checkTileValidity(randomX, randomY)) {
                     lastValidX = nextX + randomX;
                     lastValidY = nextY + randomY;
@@ -298,7 +274,6 @@
                 }
             }
         }
-
         //Best location is not the same as current location, set it as the new destination
         if (!(lastValidX == x && lastValidY == y) && this.checkTileValidity(lastValidX, lastValidY)) {
             $gameTemp.setAIPos({
@@ -307,20 +282,15 @@
             });
         }
     }
-
-
     //New function that creates a grid of the map; fills the grid with obstacles, target location and origin
     //The grid is used to find the shortest path from A to B, returns false if no path found
-    Game_Map.prototype.pathTo = function(x1, y1, x2, y2) {
+    Game_Map.prototype.pathTo = function (x1, y1, x2, y2, terrainId) {
         //Create associative array that represents the map 
         var width = $dataMap.width;
         var height = $dataMap.height;
-
         if (x1 >= width || y1 >= height || x2 >= width || y2 >= height || x1 < 0 || x2 < 0 || y1 < 0 || y2 < 0) {
             return false;
-
         } else {
-
             var grid = [];
             for (var i = 0; i < width; i++) {
                 grid[i] = [];
@@ -328,19 +298,19 @@
                     grid[i][j] = 'Empty';
                 }
             }
-
             //Set location of origin and target
             grid[x1][y1] = "Start";
             grid[x2][y2] = "Goal";
-
             //Add obstacles
             for (var i = 0; i < $gameMap.width(); i++) {
                 for (var j = 0; j < $gameMap.height(); j++) {
-                    //If tile has limited passability
+                    //If tile has limited passability, turn that tile into an obstacle IF terrainId == 0 or terrainTag above terrainId
                     if ($gameMap.checkLayeredTilesFlags(i, j, 0x0002) || $gameMap.checkLayeredTilesFlags(i, j, 0x0004) || $gameMap.checkLayeredTilesFlags(i, j, 0x0006) || $gameMap.checkLayeredTilesFlags(i, j, 0x0008)) {
-                        grid[i][j] = "Obstacle";
+                        if ($gameMap.terrainTag(i, j) == 0 || ($gameMap.terrainTag(i, j) > terrainId)) {
+                            grid[i][j] = "Obstacle";
+                        }
                     }
-                    //If tile has an event on it
+                    //If tile has an event on it, turn that tile into an obstacle
                     if ($gameMap.eventsXyNt(i, j)[0] !== undefined) {
                         //If event is tagged with an Object flag
                         if ($gameSystem.isSRPGMode() && $gameMap.eventsXyNt(i, j)[0]._srpgEventType == "object") {
@@ -356,25 +326,20 @@
             return this.findShortestPath([x1, y1], grid);
         }
     };
-
     //Gets tile distance from x1, y1 to x2, y2 (ignores passability)
-    Game_Map.prototype.distTo = function(x1, y1, x2, y2) {
+    Game_Map.prototype.distTo = function (x1, y1, x2, y2) {
         var dx = Math.abs(x1 - x2);
         var dy = Math.abs(y1 - y2);
-
         // account for looping maps
         if ($gameMap.isLoopHorizontal()) dx = Math.min(dx, $gameMap.width() - dx);
         if ($gameMap.isLoopVertical()) dy = Math.min(dy, $gameMap.height() - dy);
-
         return dx + dy;
     };
-
     // Decide a unit's action, target and movement
-    Scene_Map.prototype.srpgAICommand = function() {
+    Scene_Map.prototype.srpgAICommand = function () {
         var event = $gameTemp.activeEvent();
         var user = $gameSystem.EventToUnit(event.eventId())[1];
         if (!event || !user) return false;
-
         // Choose action and target
         var target = null;
         while (true) { // dangerous! limit loops to # of skills the user has?
@@ -383,13 +348,11 @@
             $gameTemp.clearAIPos();
             $gameTemp.clearAITargetPos();
             target = this.srpgAITarget(user, event, user.action(0));
-
             var item = user.currentAction().item();
             if (target || !item || $gameTemp.noTarget(item.id)) break;
             $gameTemp.setNoTarget(item.id);
         }
         $gameTemp.clearNoTarget();
-
         // Standing units skip their turn entirely
         var user = $gameSystem.EventToUnit(event.eventId())[1];
         if (user.battleMode() === 'stand') {
@@ -401,22 +364,27 @@
                 return false;
             }
         }
-
         // Decide movement, if not decided by target
         if (!$gameTemp.AIPos()) {
             var movementAI = _movementAI;
             //Determine the type of movement this unit is to process
             //This checks actor and class tags and obtains movementAI tag
-            //Note that actor tag overrides class tag
-            if (user.isActor() && user.currentClass().meta.movementAI) {
+            //Note that event tag overrides class tag which overrides actor tag
+            if (user.isActor() && user.event() !== undefined) {
+                if (user.event().event().meta.movementAI !== undefined) {
+                    movementAI = eval(user.event().event().meta.movementAI);
+                }
+            } else if (user.isActor() && user.currentClass().meta.movementAI) {
                 movementAI = eval(user.currentClass().meta.movementAI);
-            }
-            if (user.isActor() && user.actor().meta.movementAI) {
+            } else if (user.isActor() && user.actor().meta.movementAI) {
                 movementAI = eval(user.actor().meta.movementAI);
             }
             //Checking enemies is a bit diff as there is a condition to check if the enemy has a class attached to it or not
             //If enemy has a class, then check if an AI Move tag is detected or not
-            if (user.isEnemy() && user.enemy().classId !== undefined) {
+            if (user.isEnemy() && user.event().event().meta.movementAI !== undefined) {
+                movementAI = user.event().event().meta.movementAI;
+                console.log(user.event().event().meta.movementAI);
+            } else if (user.isEnemy() && user.enemy().classId !== undefined) {
                 if (eval($dataClasses[user.enemy().classId].meta.movementAI) !== undefined) {
                     movementAI = eval($dataClasses[user.enemy().classId].meta.movementAI);
                 } else {
@@ -427,60 +395,54 @@
             } else if (user.isEnemy() && user.enemy().meta.movementAI) {
                 movementAI = eval(user.enemy().meta.movementAI);
             }
-
             //Cycle through all movement options 
-            this.srpgMovementAI(event.posX(), event.posY(), user, user.srpgMove(), movementAI, false);
+            this.srpgMovementAI(event.posX(), event.posY(), user, user.srpgMove(), movementAI, false, user.srpgThroughTag());
         }
-
         return true;
     };
-
     //Decide function to use based on movementAI tag
-    Scene_Map.prototype.srpgMovementAI = function(x, y, user, range, AI, fallback) {
+    Scene_Map.prototype.srpgMovementAI = function (x, y, user, range, AI, fallback, terrainId) {
         var movementAI = String(AI);
-
         //Set jitter parameters
         if (movementAI.includes("JITTER")) {
             var jitter = movementAI.split("JITTER_")[1].split(" ")[0];
         } else {
             var jitter = false;
         }
-
         //Movement options
         if (movementAI.includes("AIMLESS")) {
-            this.randomPosition(x, y, range);
+            this.randomPosition(x, y, range, terrainId);
         } else if (movementAI.includes("NEARESTFOE")) {
-            this.proximityTarget(x, y, user, "NEAREST", "FOE", range, fallback, jitter);
+            this.proximityTarget(x, y, user, "NEAREST", "FOE", range, fallback, jitter, terrainId);
         } else if (movementAI.includes("NEARESTFRIEND")) {
-            this.proximityTarget(x, y, user, "NEAREST", "FRIEND", range, fallback, jitter);
+            this.proximityTarget(x, y, user, "NEAREST", "FRIEND", range, fallback, jitter, terrainId);
         } else if (movementAI.includes("RANDOMFOE")) {
-            this.proximityTarget(x, y, user, "RANDOM", "FOE", range, fallback, jitter);
+            this.proximityTarget(x, y, user, "RANDOM", "FOE", range, fallback, jitter, terrainId);
         } else if (movementAI.includes("RANDOMFRIEND")) {
-            this.proximityTarget(x, y, user, "RANDOM", "FRIEND", range, fallback, jitter);
+            this.proximityTarget(x, y, user, "RANDOM", "FRIEND", range, fallback, jitter, terrainId);
         } else if (movementAI.includes("FARTHESTFOE")) {
-            this.proximityTarget(x, y, user, "FARTHEST", "FOE", range, fallback, jitter);
+            this.proximityTarget(x, y, user, "FARTHEST", "FOE", range, fallback, jitter, terrainId);
         } else if (movementAI.includes("FARTHESTFRIEND")) {
-            this.proximityTarget(x, y, user, "FARTHEST", "FRIEND", range, fallback, jitter);
+            this.proximityTarget(x, y, user, "FARTHEST", "FRIEND", range, fallback, jitter, terrainId);
         } else if (movementAI.includes("CURRENTREGION")) {
-            this.regionMovement(x, y, "CURRENTREGION", range, fallback, jitter);
+            this.regionMovement(x, y, "CURRENTREGION", range, fallback, jitter, terrainId);
         } else if (movementAI.includes("ADJACENTREGION")) {
-            this.regionMovement(x, y, "ADJACENTREGION", range, fallback, jitter);
+            this.regionMovement(x, y, "ADJACENTREGION", range, fallback, jitter, terrainId);
         } else if (movementAI.includes("DIFFERENTREGION")) {
-            this.regionMovement(x, y, "DIFFERENTREGION", range, fallback, jitter);
+            this.regionMovement(x, y, "DIFFERENTREGION", range, fallback, jitter, terrainId);
         } else if (movementAI.includes("REGION_")) {
-            this.regionMovement(x, y, (movementAI.split("REGION_")[1]).split(" ")[0], range, fallback, jitter);
+            this.regionMovement(x, y, (movementAI.split("REGION_")[1]).split(" ")[0], range, fallback, jitter, terrainId);
         }
     }
-
     // Choose random location
-    Scene_Map.prototype.randomPosition = function(x, y, range) {
+    Scene_Map.prototype.randomPosition = function (x, y, range, terrainId) {
         //x, y will be the coordinates of the user (origin)
         //range will be srpgMove
         var limit = _loopLimit;
         while (limit > 0) {
             var randomX = Math.floor(Math.random() * ($dataMap.width + 1));
             var randomY = Math.floor(Math.random() * ($dataMap.height + 1));
-            var path = $gameMap.pathTo(x, y, randomX, randomY);
+            var path = $gameMap.pathTo(x, y, randomX, randomY, terrainId);
             if (path.length > 0 && path.length <= range && $gameMap.checkTileValidity(randomX, randomY)) {
                 $gameTemp.setAIPos({
                     x: randomX,
@@ -495,21 +457,17 @@
             }
         }
     }
-
     // Movement based on Region 
-    Scene_Map.prototype.regionMovement = function(x, y, targetRegion, range, fallback, jitter) {
+    Scene_Map.prototype.regionMovement = function (x, y, targetRegion, range, fallback, jitter, terrainId) {
         //x, y will be the coordinates of the user (origin)
         //targetRegion indicates how movement will occur in relation to regions
         //range is range of the user (srpgMove)
         //Fallback is boolean; if set to true then it skips "finding position closes to target region" and calls upon the fallback movement AI routine
         var movementProcessed = false; //Set to true when a path to target is found and stops fallback pathfinding from occurring
         var path = []; //This array is used to store pathfinding route to a potential target
-
         var currentRegion = $gameMap.regionId(x, y);
-
         var possibleCoordinatesX = [];
         var possibleCoordinatesY = [];
-
         //Cycle through squares that user can move to (within srpgMove range) and check region values 
         for (var i = Math.max(0, x - range); i <= Math.min($gameMap.width(), x + range); i++) {
             for (var j = Math.max(0, y - range); j <= Math.min($gameMap.width(), y + range); j++) {
@@ -542,7 +500,6 @@
                 }
             }
         }
-
         //Check if any candidate locations were found
         if (possibleCoordinatesX.length > 0 && possibleCoordinatesX.length == possibleCoordinatesY.length) {
             //Pick a random coordinate to move to 
@@ -568,8 +525,8 @@
                 }
             }
             if (targetRegion == "ADJACENTREGION" || targetRegion == "DIFFERENTREGION") { //All surrounding spaces are the not candidate regions; move randomly within same region
-                var bestPath = $gameMap.pathTo(x, y, Math.floor(Math.random() * $gameMap.width()), Math.floor(Math.random() * $gameMap.height()));
-                $gameMap.pathToCoordinate(x, y, bestPath, range, false);
+                var bestPath = $gameMap.pathTo(x, y, Math.floor(Math.random() * $gameMap.width()), Math.floor(Math.random() * $gameMap.height()), terrainId);
+                $gameMap.pathToCoordinate(x, y, bestPath, range, false, terrainId);
             }
             if (!isNaN(targetRegion) && currentRegion != targetRegion) { //Move to region X; find other tiles with region X and move towards the
                 //Find all tiles with region X
@@ -580,7 +537,7 @@
                 for (var i = 0; i < $gameMap.width(); i++) {
                     for (var j = 0; j < $gameMap.height(); j++) {
                         if ($gameMap.regionId(i, j) == targetRegion) {
-                            bestPath = $gameMap.pathTo(x, y, i, j);
+                            bestPath = $gameMap.pathTo(x, y, i, j, terrainId);
                             if (bestPath.length < bestDist) {
                                 bestX = i;
                                 bestY = j;
@@ -591,17 +548,16 @@
                 }
                 //Check if we got a solution or not
                 if (!(bestX == x && bestY == y)) {
-                    $gameMap.pathToCoordinate(x, y, bestPath, range, jitter);
+                    $gameMap.pathToCoordinate(x, y, bestPath, range, jitter, terrainId);
                 } else { //No solution; move randomly
-                    var bestPath = $gameMap.pathTo(x, y, Math.floor(Math.random() * $gameMap.width()), Math.floor(Math.random() * $gameMap.height()));
-                    $gameMap.pathToCoordinate(x, y, bestPath, range, false);
+                    var bestPath = $gameMap.pathTo(x, y, Math.floor(Math.random() * $gameMap.width()), Math.floor(Math.random() * $gameMap.height()), terrainId);
+                    $gameMap.pathToCoordinate(x, y, bestPath, range, false, terrainId);
                 }
             }
         }
     }
-
     // Choose foe / friend based on proximity
-    Scene_Map.prototype.proximityTarget = function(x, y, user, proximity, targetType, range, fallback, jitter) {
+    Scene_Map.prototype.proximityTarget = function (x, y, user, proximity, targetType, range, fallback, jitter, terrainId) {
         //x, y will be the coordinates of the user (origin)
         //proximity is a string and either "NEAREST", "RANDOM" or "FARTHEST"
         //user is mainly used to check user's confusion status
@@ -626,14 +582,12 @@
         var userTeam; //This variable represent's the user's team
         var targetTeam; //This variable represents the target team
         var userConfusionState = user.confusionLevel();
-
         //Determine user's team
         if (user.isActor()) {
             var userTeam = "actor";
         } else if (user.isEnemy()) {
             var userTeam = "enemy";
         }
-
         //Determine who the other target should be based on confusion
         //Confusion level of 0 = Normal 
         //Confusion level of 1 = Attack random enemy 
@@ -646,7 +600,6 @@
                 userConfusionState = 3;
             }
         }
-
         if (userConfusionState == 3) {
             if (user.isActor()) {
                 var userTeam = "enemy";
@@ -654,63 +607,62 @@
                 var userTeam = "actor";
             }
         }
-
         //Define the other team
         var opposingTeam = (userTeam == "actor") ? "enemy" : "actor";
-
         //Determine which team to target 
         if (targetType.toUpperCase() == "FOE") {
             var targetTeam = opposingTeam;
         } else if (targetType.toUpperCase() == "FRIEND") {
             var targetTeam = userTeam;
         }
-
         //Count potential targets exist
         for (var i = 0; i < $gameMap._events.length; i++) {
             if ($gameMap._events[i] !== undefined) {
-                if ($gameMap._events[i].isType() == targetTeam && !($gameMap._events[i].x == x && $gameMap._events[i].y == y)) {
-                    //Check if event is targettable 
-                    var targettable = true;
-                    if ($gameSystem.EventToUnit(i)[1] !== undefined) {
-                        if ($gameSystem.EventToUnit(i)[1].isStateAffected(1) || $gameSystem.EventToUnit(i)[1].hp <= 0) {
-                            targettable = false;
+                if ($gameMap._events[i] !== null) {
+                    if ($gameMap._events[i].isType() == targetTeam && !($gameMap._events[i].x == x && $gameMap._events[i].y == y)) {
+                        //Check if event is targettable 
+                        var targettable = true;
+                        if ($gameSystem.EventToUnit(i)[1] !== undefined) {
+                            if ($gameSystem.EventToUnit(i)[1] !== null) {
+                                if ($gameSystem.EventToUnit(i)[1].isStateAffected(1) || $gameSystem.EventToUnit(i)[1].hp <= 0) {
+                                    targettable = false;
+                                }
+                            }
                         }
-                    }
-                    //Event is targettable 
-                    if (targettable) {
-                        //Add this target to the target array
-                        targetArray.push($gameMap._events[i]);
-                        //Pathfind to the target
-                        var path = $gameMap.pathTo(x, y, $gameMap._events[i].x, $gameMap._events[i].y);
-
-                        //If path to target is shortest than maxdistance or the previous event then replace the best target with this target
-                        if (path.length < pathDistance && proximity == "NEAREST") {
-                            pathDistance = path.length;
-                            bestPath = path;
-                            bestTarget = $gameMap._events[i]; //This stores event id of our target
-                            //If path to target is longer than 0 or the previous event then replace the best target with this target
-                        } else if (path.length > pathDistance && proximity == "FARTHEST") {
-                            bestPath = path;
-                            pathDistance = path.length;
-                            bestTarget = $gameMap._events[i]; //This stores event id of our target
-                        }
-                        //Check actual distance from user to target
-                        var dist = $gameMap.distTo(x, y, $gameMap._events[i].x, $gameMap._events[i].y);
-                        //Save the event if its the closest target
-                        if (dist < realDistance && proximity == "NEAREST") {
-                            realDistance = dist;
-                            potentialTarget = $gameMap._events[i];
-                        }
-                        //Otherwise save the event if its the farthest target
-                        else if (dist > realDistance && proximity == "FARTHEST") {
-                            realDistance = dist;
-                            potentialTarget = $gameMap._events[i];
+                        //Event is targettable 
+                        if (targettable) {
+                            //Add this target to the target array
+                            targetArray.push($gameMap._events[i]);
+                            //Pathfind to the target
+                            var path = $gameMap.pathTo(x, y, $gameMap._events[i].x, $gameMap._events[i].y, terrainId);
+                            //If path to target is shortest than maxdistance or the previous event then replace the best target with this target
+                            if (path.length < pathDistance && proximity == "NEAREST") {
+                                pathDistance = path.length;
+                                bestPath = path;
+                                bestTarget = $gameMap._events[i]; //This stores event id of our target
+                                //If path to target is longer than 0 or the previous event then replace the best target with this target
+                            } else if (path.length > pathDistance && proximity == "FARTHEST") {
+                                bestPath = path;
+                                pathDistance = path.length;
+                                bestTarget = $gameMap._events[i]; //This stores event id of our target
+                            }
+                            //Check actual distance from user to target
+                            var dist = $gameMap.distTo(x, y, $gameMap._events[i].x, $gameMap._events[i].y);
+                            //Save the event if its the closest target
+                            if (dist < realDistance && proximity == "NEAREST") {
+                                realDistance = dist;
+                                potentialTarget = $gameMap._events[i];
+                            }
+                            //Otherwise save the event if its the farthest target
+                            else if (dist > realDistance && proximity == "FARTHEST") {
+                                realDistance = dist;
+                                potentialTarget = $gameMap._events[i];
+                            }
                         }
                     }
                 }
             }
         }
-
         //Targets exist but are not reachable and fallback pathfinding is enabled
         if (targetArray.length > 0 && bestPath.length == 0) {
             if (_fallbackPathfinding) {
@@ -719,7 +671,7 @@
                     for (var i = 0; i < $dataMap.width; i++) {
                         for (var j = 0; j < $dataMap.width; j++) {
                             //If this square has a valid path
-                            var path = $gameMap.pathTo(x, y, i, j);
+                            var path = $gameMap.pathTo(x, y, i, j, terrainId);
                             if (path.length > 0) {
                                 //If this square is closer to the target (or closer than current position)
                                 if ($gameMap.distTo(i, j, potentialTarget.x, potentialTarget.y) < realDistance) {
@@ -730,10 +682,9 @@
                         }
                     }
                 }
-
                 //Check if we found a square that we can pathfind to and closer than our current position
                 if (bestPath.length > 0) {
-                    $gameMap.pathToCoordinate(x, y, bestPath, user.srpgMove(), jitter);
+                    $gameMap.pathToCoordinate(x, y, bestPath, user.srpgMove(), jitter, terrainId);
                     movementProcessed = true;
                 }
             } else if (_fallbackMovementAI !== false && !fallback) {
@@ -741,20 +692,46 @@
                 console.log("Fallback movement AI of " + _fallbackMovementAI + " initiated");
             }
         }
-
         //Targets exist and reachable, process pathfinding (applies for nearest and farthest algorithms)
         if (targetArray.length > 0 && bestPath.length > 0 && !movementProcessed) {
-            $gameMap.pathToCoordinate(x, y, bestPath, user.srpgMove(), jitter);
+            $gameMap.pathToCoordinate(x, y, bestPath, user.srpgMove(), jitter, terrainId);
         }
-
         //Targets exist and reachable, process pathfinding (applies for random target selection)
         if (targetArray.length > 0 && bestPath.length == 0 && proximity == "RANDOM" && !movementProcessed) {
             var rand = Math.floor(Math.random() * targetArray.length);
-            var bestPath = $gameMap.pathTo(x, y, targetArray[rand].x, targetArray[rand].y);
-            $gameMap.pathToCoordinate(x, y, bestPath, user.srpgMove(), jitter);
+            var bestPath = $gameMap.pathTo(x, y, targetArray[rand].x, targetArray[rand].y, terrainId);
+            $gameMap.pathToCoordinate(x, y, bestPath, user.srpgMove(), jitter, terrainId);
         }
-
     }
-
-
+    //Overwritten function that replaced default pathfinding when player is moved by mouse click
+/*
+    Game_Player.prototype.moveByInput = function() {
+        if (!this.isMoving() && this.canMove()) {
+            var direction = this.getInputDirection();
+            var path = [];
+            if (direction > 0) {
+                $gameTemp.clearDestination();
+                this.executeMove(direction);
+            } else if ($gameTemp.isDestinationValid()) {
+                var x = $gameTemp.destinationX();
+                var y = $gameTemp.destinationY();
+                var path = this.pathTo(x, y);
+				var direction = this.findDirectionTo(x, y);
+			}
+            if (path.length > 0 && !(this.x == x && this.y == y)) {
+                if (path[path.length - 1] == "Left") {
+                    this.executeMove(6);
+                } else if (path[path.length - 1] == "Right") {
+                    this.executeMove(4);
+                } else if (path[path.length - 1] == "Up") {
+                    this.executeMove(2);
+                } else if (path[path.length - 1] == "Down") {
+                    this.executeMove(8);
+                }
+            } else if (!path && direction > 0 && _fallbackPathfinding) {
+				this.executeMove(direction);
+            } 
+        }
+    };
+	*/
 })();
