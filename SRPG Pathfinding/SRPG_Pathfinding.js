@@ -383,7 +383,6 @@
             //If enemy has a class, then check if an AI Move tag is detected or not
             if (user.isEnemy() && user.event().event().meta.movementAI !== undefined) {
                 movementAI = user.event().event().meta.movementAI;
-                console.log(user.event().event().meta.movementAI);
             } else if (user.isEnemy() && user.enemy().classId !== undefined) {
                 if (eval($dataClasses[user.enemy().classId].meta.movementAI) !== undefined) {
                     movementAI = eval($dataClasses[user.enemy().classId].meta.movementAI);
