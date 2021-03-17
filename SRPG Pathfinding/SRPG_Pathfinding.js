@@ -2,7 +2,7 @@
 //SRPG_Pathfinding.js
 //=============================================================================
 /*:
- * @plugindesc Adjusts pathfinding algorithm for determining where units should move when no valid target. Requires SRPG_AIControl.js
+ * @plugindesc Adjusts pathfinding algorithm for determining where units should move when no valid target. Requires SRPG_AIControl.js and SRPG_RangeControl.js
  * @author Boomy 
  * 
  * @param Movement AI
@@ -46,6 +46,7 @@
  * 1/10/20 - Update with addition of "face target and move towards it" default movement added if no path can be found to targets
  * 6/10/20 - Added support for regions as well as improve AI pathfinding. Added jitter variable to make movements less predictabl
  * 17/3/20 - Fixed id:0 for events as well as added support for srpgThroughTag (thanks Shoukang)
+ * 18/3/20 - Added limited support for terrain (units will still pick the shortest route regardless of terrain restrictions)
  *
  * What does this script do?
  * This script changes the pathfinding of units controlled by the computer (mainly enemy AI) when no targets are in range
@@ -163,8 +164,7 @@
     // Explores the grid from the given location in the given direction
     Game_Map.prototype.exploreInDirection = function (currentLocation, direction, grid) {
         var newPath = currentLocation.path.slice();
-        newPath.push(direction);
-		var dfl = currentLocation.distanceFromLeft;
+        var dfl = currentLocation.distanceFromLeft;
         var dft = currentLocation.distanceFromTop;
         if (direction === 'Left') {
             dfl -= 1;
@@ -175,6 +175,11 @@
         } else if (direction === 'Up') {
             dft -= 1;
         }
+		newPath.push(direction);
+		//Terrain movement calculation edit
+		//for(var i = 0; i < $gameMap.srpgMoveCost(dfl, dft); i++) {
+		//	newPath.push(direction);
+		//}
         var newLocation = {
             distanceFromTop: dft,
             distanceFromLeft: dfl,
@@ -211,24 +216,28 @@
                 if (this.checkTileValidity(nextX, nextY)) {
                     lastValidX = nextX;
                     lastValidY = nextY;
+					i += $gameMap.srpgMoveCost(nextX, nextY) - 1;
                 }
             } else if (path[0] == "Left") {
                 nextX--;
                 if (this.checkTileValidity(nextX, nextY)) {
                     lastValidX = nextX;
                     lastValidY = nextY;
+					i += $gameMap.srpgMoveCost(nextX, nextY) - 1;
                 }
             } else if (path[0] == "Up") {
                 nextY--;
                 if (this.checkTileValidity(nextX, nextY)) {
                     lastValidX = nextX;
                     lastValidY = nextY;
+					i += $gameMap.srpgMoveCost(nextX, nextY) - 1;
                 }
             } else if (path[0] == "Down") {
                 nextY++;
                 if (this.checkTileValidity(nextX, nextY)) {
                     lastValidX = nextX;
                     lastValidY = nextY;
+					i += $gameMap.srpgMoveCost(nextX, nextY) - 1;
                 }
             }
             path.shift();
