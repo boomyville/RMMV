@@ -148,13 +148,11 @@
         var dft = location.distanceFromTop;
         if (location.distanceFromLeft < 0 || location.distanceFromLeft >= $gameMap.width() || location.distanceFromTop < 0 || location.distanceFromTop >= $gameMap.height()) {
             // location is not on the grid--return false
-			console.log("Not on the map");
-            return 'Invalid';
+			return 'Invalid';
         } else if (grid[dfl] == undefined) {
 			return 'Invalid';
 		} else if (grid[dfl][dft] === 'Goal') {
-			console.log(dfl + "|" + dft);
-            return 'Goal';
+			return 'Goal';
         } else if (grid[dfl][dft] !== 'Empty') {
             // location is either an obstacle or has been visited
             return 'Blocked';
@@ -291,8 +289,7 @@
     //New function that creates a grid of the map; fills the grid with obstacles, target location and origin
     //The grid is used to find the shortest path from A to B, returns false if no path found
     Game_Map.prototype.pathTo = function (x1, y1, x2, y2, terrainId) {
-		console.log("FIRE ONCE");
-        //Create associative array that represents the map 
+		//Create associative array that represents the map 
         var width = $dataMap.width;
         var height = $dataMap.height;
         if (x1 >= width || y1 >= height || x2 >= width || y2 >= height || x1 < 0 || x2 < 0 || y1 < 0 || y2 < 0) {
@@ -307,8 +304,7 @@
             }
             //Set location of origin and target
             grid[x1][y1] = "Start";
-		console.log("apparent goal:" + x2 + "|" + y2);
-            grid[x2][y2] = "Goal";
+		    grid[x2][y2] = "Goal";
             //Add obstacles
             for (var i = 0; i < $gameMap.width(); i++) {
                 for (var j = 0; j < $gameMap.height(); j++) {
