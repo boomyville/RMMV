@@ -44,7 +44,8 @@
  * 24/9/20 - First Release
  * 30/9/20 - Rewrote srpgAICommand function to directly use pathfinding function to reduce lag and optimise pathfinding solutions
  * 1/10/20 - Update with addition of "face target and move towards it" default movement added if no path can be found to targets
- * 6/10/20 - Added support for regions as well as improve AI pathfinding. Added jitter variable to make movements less predictable
+ * 6/10/20 - Added support for regions as well as improve AI pathfinding. Added jitter variable to make movements less predictabl
+ * 17/3/20 - Fixed id:0 for events as well as added support for srpgThroughTag (thanks Shoukang)
  *
  * What does this script do?
  * This script changes the pathfinding of units controlled by the computer (mainly enemy AI) when no targets are in range
@@ -106,10 +107,11 @@
     var _loopLimit = parameters['AI Loop Cycles']; //How many loops to do before giving up on selecting a valid random tile 
     //var _defaultRegion = eval(parameters['Default Region ID']);
     //credit to Traverse of RPG Maker Central Forums for the above scriplet via SoulPour777 RPG Maker MV scripting tutorial video
-    //Find the shortest path based on starting coordinates, target coordinates and the grid 
+    
+	//Find the shortest path based on starting coordinates, target coordinates and the grid 
     Game_Map.prototype.findShortestPath = function (startCoordinates, grid) {
-        var distanceFromTop = startCoordinates[0];
-        var distanceFromLeft = startCoordinates[1];
+        var distanceFromLeft = startCoordinates[0];
+        var distanceFromTop = startCoordinates[1];
         // Each "location" will store its coordinates
         // and the shortest path required to arrive there
         var location = {
@@ -120,7 +122,7 @@
         };
         // Initialize the queue with the start location already inside
         var queue = [location];
-        // Loop through the grid searching for the goal
+	    // Loop through the grid searching for the goal
         while (queue.length > 0) {
             // Take the first location off the queue
             var currentLocation = queue.shift();
@@ -136,20 +138,24 @@
         }
         return false;
     };
+	
     // This function will check a location's status
     // (a location is "valid" if it is on the grid, is not an "obstacle",
     // and has not yet been visited by our algorithm)
     // Returns "Valid", "Invalid", "Blocked", or "Goal"
     Game_Map.prototype.locationStatus = function (location, grid) {
-        var gridSize = grid.length;
+		var dfl = location.distanceFromLeft;
         var dft = location.distanceFromTop;
-        var dfl = location.distanceFromLeft;
-        if (location.distanceFromLeft < 0 || location.distanceFromLeft >= gridSize || location.distanceFromTop < 0 || location.distanceFromTop >= gridSize) {
+        if (location.distanceFromLeft < 0 || location.distanceFromLeft >= $gameMap.width() || location.distanceFromTop < 0 || location.distanceFromTop >= $gameMap.height()) {
             // location is not on the grid--return false
+			console.log("Not on the map");
             return 'Invalid';
-        } else if (grid[dft][dfl] === 'Goal') {
+        } else if (grid[dfl] == undefined) {
+			return 'Invalid';
+		} else if (grid[dfl][dft] === 'Goal') {
+			console.log(dfl + "|" + dft);
             return 'Goal';
-        } else if (grid[dft][dfl] !== 'Empty') {
+        } else if (grid[dfl][dft] !== 'Empty') {
             // location is either an obstacle or has been visited
             return 'Blocked';
         } else {
@@ -160,16 +166,16 @@
     Game_Map.prototype.exploreInDirection = function (currentLocation, direction, grid) {
         var newPath = currentLocation.path.slice();
         newPath.push(direction);
+		var dfl = currentLocation.distanceFromLeft;
         var dft = currentLocation.distanceFromTop;
-        var dfl = currentLocation.distanceFromLeft;
         if (direction === 'Left') {
-            dft -= 1;
-        } else if (direction === 'Down') {
-            dfl += 1;
-        } else if (direction === 'Right') {
-            dft += 1;
-        } else if (direction === 'Up') {
             dfl -= 1;
+        } else if (direction === 'Down') {
+            dft += 1;
+        } else if (direction === 'Right') {
+            dfl += 1;
+        } else if (direction === 'Up') {
+            dft -= 1;
         }
         var newLocation = {
             distanceFromTop: dft,
@@ -180,7 +186,7 @@
         newLocation.status = this.locationStatus(newLocation, grid);
         // If this new location is valid, mark it as 'Visited'
         if (newLocation.status === 'Valid') {
-            grid[newLocation.distanceFromTop][newLocation.distanceFromLeft] = 'Visited';
+            grid[newLocation.distanceFromLeft][newLocation.distanceFromTop] = 'Visited';
         }
         return newLocation;
     };
@@ -285,6 +291,7 @@
     //New function that creates a grid of the map; fills the grid with obstacles, target location and origin
     //The grid is used to find the shortest path from A to B, returns false if no path found
     Game_Map.prototype.pathTo = function (x1, y1, x2, y2, terrainId) {
+		console.log("FIRE ONCE");
         //Create associative array that represents the map 
         var width = $dataMap.width;
         var height = $dataMap.height;
@@ -300,6 +307,7 @@
             }
             //Set location of origin and target
             grid[x1][y1] = "Start";
+		console.log("apparent goal:" + x2 + "|" + y2);
             grid[x2][y2] = "Goal";
             //Add obstacles
             for (var i = 0; i < $gameMap.width(); i++) {
@@ -626,7 +634,11 @@
                                 if ($gameSystem.EventToUnit(i)[1].isStateAffected(1) || $gameSystem.EventToUnit(i)[1].hp <= 0) {
                                     targettable = false;
                                 }
+                            } else {
+                                targettable = false;
                             }
+                        } else {
+                            targettable = false;
                         }
                         //Event is targettable 
                         if (targettable) {
