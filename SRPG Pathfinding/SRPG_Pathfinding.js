@@ -36,6 +36,10 @@
  * @desc Set unregioned tiles to default region ID for pathfinding purposes. Set to false to ignore unregioned tiles.
  * @default false
  * 
+ * @param ShouKang Move Cost Method
+ * @desc If true, a unit can move if enough moveCost to COMPLETE movement; default method is enough moveCost to REACH the tile
+ * @default false
+ * 
  * @help
  * This plugin is a work in progress!
  * Credits to: Dopan, Dr. Q, Greg Trowbridge, Traverse, SoulPour777
@@ -45,8 +49,9 @@
  * 30/9/20 - Rewrote srpgAICommand function to directly use pathfinding function to reduce lag and optimise pathfinding solutions
  * 1/10/20 - Update with addition of "face target and move towards it" default movement added if no path can be found to targets
  * 6/10/20 - Added support for regions as well as improve AI pathfinding. Added jitter variable to make movements less predictabl
- * 17/3/20 - Fixed id:0 for events as well as added support for srpgThroughTag (thanks Shoukang)
- * 18/3/20 - Added limited support for terrain (units will still pick the shortest route regardless of terrain restrictions)
+ * 17/3/21 - Fixed id:0 for events as well as added support for srpgThroughTag (thanks Shoukang)
+ * 18/3/21 - Added limited support for terrain (units will still pick the shortest route regardless of terrain restrictions)
+ * 31/3/21 - Added compatability to ShouKang's implementation of unit movement with variable terrain passability
  *
  * What does this script do?
  * This script changes the pathfinding of units controlled by the computer (mainly enemy AI) when no targets are in range
@@ -86,7 +91,7 @@
  * REGION_X - Units will move towards nearest tile of region X if they are not in region X, otherwise they will follow CURRENTREGION movement algorithm.
  * ADJACENTREGION - Units will to a region +/- 1 of the current one. If they cannot find an adjacent region within range, they will follow CURRENT REGION movement algorithm. 
  * DIFFERENTREGION - Units will move to any square randomly with a different region to current. If they cannot find any valid options, RANDOM movement algorithm will be followed. 
- * POINT_X_Y - Units will move towards map coordinates X, Y. If they are at X,Y then STAND movement algorithm will be followed 
+ * POINT_X_Y - Units will move towards map coordinates X, Y. If they are at X,Y then STAND movement algorithm will be followed [NOT IMPLEMENTED YET]
  * AREA_X_Y_Z - Units will move towards map coordinates X, Y. If they are within Z tiles of X,Y then RANDOM movement algorithm will be followed [NOT IMPLEMENTED YET]
  * 
  * Other tags that can be included in movementAI:
@@ -106,6 +111,8 @@
     var _fallbackPathfinding = eval(parameters['Fallback Pathfinding']);
     var _fallbackMovementAI = eval(parameters['Fallback Movement AI']);
     var _loopLimit = parameters['AI Loop Cycles']; //How many loops to do before giving up on selecting a valid random tile 
+	var _moveCostMethod = parameters['ShouKang Move Cost Method']; //If set to true, use ShouKang movement method when moving to tiles with terrainIds with movementCost > 1 
+	console.log(_moveCostMethod);
     //var _defaultRegion = eval(parameters['Default Region ID']);
     //credit to Traverse of RPG Maker Central Forums for the above scriplet via SoulPour777 RPG Maker MV scripting tutorial video
     
@@ -213,28 +220,28 @@
         for (var i = 0; i < range && path.length > 0; i++) {
             if (path[0] == "Right") {
                 nextX++;
-                if (this.checkTileValidity(nextX, nextY)) {
+                if (this.checkTileValidity(nextX, nextY) && (!_moveCostMethod || (i - 1 + $gameMap.srpgMoveCost(nextX, nextY) < range))) {
                     lastValidX = nextX;
                     lastValidY = nextY;
 					i += $gameMap.srpgMoveCost(nextX, nextY) - 1;
                 }
             } else if (path[0] == "Left") {
                 nextX--;
-                if (this.checkTileValidity(nextX, nextY)) {
+                if (this.checkTileValidity(nextX, nextY) && (!_moveCostMethod || (i - 1 + $gameMap.srpgMoveCost(nextX, nextY) < range))) {
                     lastValidX = nextX;
                     lastValidY = nextY;
 					i += $gameMap.srpgMoveCost(nextX, nextY) - 1;
                 }
             } else if (path[0] == "Up") {
                 nextY--;
-                if (this.checkTileValidity(nextX, nextY)) {
+                if (this.checkTileValidity(nextX, nextY) && (!_moveCostMethod || (i - 1 + $gameMap.srpgMoveCost(nextX, nextY) < range))) {
                     lastValidX = nextX;
                     lastValidY = nextY;
 					i += $gameMap.srpgMoveCost(nextX, nextY) - 1;
                 }
             } else if (path[0] == "Down") {
                 nextY++;
-                if (this.checkTileValidity(nextX, nextY)) {
+                if (this.checkTileValidity(nextX, nextY) && (!_moveCostMethod || (i - 1 + $gameMap.srpgMoveCost(nextX, nextY) < range))) {
                     lastValidX = nextX;
                     lastValidY = nextY;
 					i += $gameMap.srpgMoveCost(nextX, nextY) - 1;
