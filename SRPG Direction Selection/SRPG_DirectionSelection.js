@@ -1,5 +1,5 @@
 //=============================================================================
-//SRPG_Pathfinding.js
+//SRPG_DirectionSelection.js
 //=============================================================================
 /*:
  * @plugindesc Adds the ability for players to choose a direction of an actor after an action
@@ -175,8 +175,15 @@
         if ($gameSystem.isSubBattlePhase() === 'direction_selection') {
             //$gameSystem.setSubBattlePhase('after_battle');
             this.srpgBattlerDeadAfterBattle();
-            this.srpgPostBattleDirectionSelection(); //This function checks if user has selected an input (direction key or mouse click) and applies direction to battler 
-            return;
+		//Set battle direction #Boomy
+		if($gameTemp._areaTargets !== undefined) { //Set a check if there are multiple actions to occur due to an AoE effect
+			if($gameTemp.areaTargets().length == 0) {
+				this.srpgPostBattleDirectionSelection(); //This function checks if user has selected an input (direction key or mouse click) and applies direction to battler 
+			} else {
+				this.srpgAfterAction();
+			}
+		return;
+		}
         }
         //Process Post-battle 
         if ($gameSystem.isSubBattlePhase() === 'after_battle') {
