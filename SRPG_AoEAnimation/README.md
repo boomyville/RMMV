@@ -12,3 +12,6 @@ The primary target cannot really be changed by the user unless they move the AoE
 Requires skills to target "all enemies" or "all allies" otherwise it will just target the primary target
 Animation can be set to screen or individual
 This script also removes the target's battle hud if there's more than 1 target to avoid confusion
+
+Incompatabilties:
+Doesn't like SRPG_DirectionMod.js though that script is probably way outdated now
