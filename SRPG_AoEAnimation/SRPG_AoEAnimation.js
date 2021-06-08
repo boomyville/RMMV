@@ -169,11 +169,12 @@
         $gameTemp.clearAreaTargets();
         actionArray[1].setActionTiming(0); //_srpgActionTiming = 0 means this unit is attacker, if its 1 then the unit is the defender (that can counter attack)
         //Setup the troop data (by default it will use Troop map 1 as the battle)
-        if ($dataTroops[_srpgTroopID]) {
-            BattleManager.setup(_srpgTroopID, false, true);
-        } else {
-            BattleManager.setup(1, false, true);
-        }
+        BattleManager.setup(1, false, true);
+        //if ($dataTroops[_srpgTroopID]) {
+         //   BattleManager.setup(_srpgTroopID, false, true);
+        //} else {
+            
+        //}
         //If target and 'active unit' are not the same, set counter-attack targets (if both units are on opposing teams)
         if (actionArray[1] != targetArray[1]) {
             targetArray[1].srpgMakeNewActions();
