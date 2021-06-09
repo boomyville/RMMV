@@ -170,9 +170,8 @@
         //Setup the troop data (by default it will use Troop map 1 as the battle)
         BattleManager.setup(1, false, true);
         //if ($dataTroops[_srpgTroopID]) {
-         //   BattleManager.setup(_srpgTroopID, false, true);
+        //   BattleManager.setup(_srpgTroopID, false, true);
         //} else {
-            
         //}
         //If target and 'active unit' are not the same, set counter-attack targets (if both units are on opposing teams)
         if (actionArray[1] != targetArray[1]) {
@@ -208,31 +207,28 @@
         this._callSrpgBattle = true;
         this.eventBeforeBattle();
     };
-	//Kill units that were affected by AreaTargets
-	  var _Scene_Map_srpgBattlerDeadAfterBattle = Scene_Map.prototype.srpgBattlerDeadAfterBattle;
-	  Scene_Map.prototype.srpgBattlerDeadAfterBattle = function() {
-         _Scene_Map_srpgBattlerDeadAfterBattle.call(this);
-		 
-		         if ($gameTemp._areaTargets !== undefined) {
+    //Kill units that were affected by AreaTargets
+    var _Scene_Map_srpgBattlerDeadAfterBattle = Scene_Map.prototype.srpgBattlerDeadAfterBattle;
+    Scene_Map.prototype.srpgBattlerDeadAfterBattle = function () {
+        _Scene_Map_srpgBattlerDeadAfterBattle.call(this);
+        if ($gameTemp._areaTargets !== undefined) {
             for (var i = 0; i < $gameTemp.areaTargets().length; i++) {
-				console.log($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1].hp);
-				 if($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1].isDead()) {
-					 if (!$gameTemp.areaTargets()[i].event.isErased()) {
-						 if($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1].isActor()) {
-							 var oldValue = $gameVariables.value(PluginManager.parameters('SRPG_core').existActorVarID);
-							 $gameVariables.setValue(PluginManager.parameters('SRPG_core').existActorVarID, oldValue - 1);
-						 } else if($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1].isEnemy()) {
-							  var oldValue = $gameVariables.value(PluginManager.parameters('SRPG_core').existEnemyVarID);
-							  $gameVariables.setValue(PluginManager.parameters('SRPG_core').existEnemyVarID, oldValue - 1);
-						 }
-						 $gameTemp.areaTargets()[i].event.erase();
-					 }
-				 }
+                if ($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1].isDead()) {
+                    if (!$gameTemp.areaTargets()[i].event.isErased()) {
+                        if ($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1].isActor()) {
+                            var oldValue = $gameVariables.value(PluginManager.parameters('SRPG_core').existActorVarID);
+                            $gameVariables.setValue(PluginManager.parameters('SRPG_core').existActorVarID, oldValue - 1);
+                        } else if ($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1].isEnemy()) {
+                            var oldValue = $gameVariables.value(PluginManager.parameters('SRPG_core').existEnemyVarID);
+                            $gameVariables.setValue(PluginManager.parameters('SRPG_core').existEnemyVarID, oldValue - 1);
+                        }
+                        $gameTemp.areaTargets()[i].event.erase();
+                    }
+                }
             }
         }
-		$gameTemp.clearAreaTargets();
+        $gameTemp.clearAreaTargets();
     };
-	
     // SRPG戦闘用のウィンドウを作る
     Scene_Battle.prototype.createSprgBattleStatusWindow = function () {
         this._srpgBattleStatusWindowLeft = new Window_SrpgBattleStatus(0);
