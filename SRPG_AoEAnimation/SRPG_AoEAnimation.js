@@ -72,7 +72,85 @@
             _SRPG_Game_Troop_setup.call(this, troopId);
         }
     };
-    Scene_Map.prototype.srpgBattleStart = function (actionArray, targetArray) {
+	
+	  Scene_Map.prototype.srpgBattleStart = function (actionArray, targetArray) {
+		//Check if use regular AoE animation or not
+		if( actionArray[1].currentAction().item().meta.defaultAoE === true) {
+			$gameTemp._aoeEffect = false;
+		$gameParty.clearSrpgBattleActors();
+        $gameTroop.clearSrpgBattleEnemys();
+        if (actionArray[0] === 'actor') {
+            $gameParty.pushSrpgBattleActors(actionArray[1]);
+            if (targetArray[0] === 'actor') {
+                if (actionArray[1] != targetArray[1]) {
+                    $gameParty.pushSrpgBattleActors(targetArray[1]);
+                    actionArray[1].action(0).setTarget(1);
+                } else {
+                    actionArray[1].action(0).setTarget(0);
+                }
+            } else if (targetArray[0] === 'enemy') {
+                $gameTroop.pushSrpgBattleEnemys(targetArray[1]);
+                actionArray[1].action(0).setTarget(0);
+            }
+        } else if (actionArray[0] === 'enemy') {
+            $gameTroop.pushSrpgBattleEnemys(actionArray[1]);
+            actionArray[1].action(0).setSrpgEnemySubject(0);
+            if (targetArray[0] === 'actor') {
+                $gameParty.pushSrpgBattleActors(targetArray[1]);
+                actionArray[1].action(0).setTarget(0);
+            } else if (targetArray[0] === 'enemy') {
+                if (actionArray[1] != targetArray[1]) {
+                    $gameTroop.pushSrpgBattleEnemys(targetArray[1]);
+                    actionArray[1].action(0).setTarget(1);
+                } else {
+                    actionArray[1].action(0).setTarget(0);
+                }
+            }
+        }
+        actionArray[1].setActionTiming(0);
+        if ($dataTroops[PluginManager.parameters('SRPG_core').srpgTroopID]) {
+            BattleManager.setup(PluginManager.parameters('SRPG_core').srpgTroopID, false, true);
+        } else {
+            BattleManager.setup(1, false, true);
+        }
+        //対象の行動を設定
+        if (actionArray[1] != targetArray[1]) {
+            targetArray[1].srpgMakeNewActions();
+            if (actionArray[0] === 'actor' && targetArray[0] === 'enemy' && targetArray[1].canMove()) {
+                targetArray[1].action(0).setSrpgEnemySubject(0);
+                targetArray[1].action(0).setAttack();
+                targetArray[1].action(0).setTarget(0);
+            }
+            if (actionArray[0] === 'enemy' && targetArray[0] === 'actor' && targetArray[1].canMove()) {
+                targetArray[1].action(0).setAttack();
+                targetArray[1].action(0).setTarget(0);
+            }
+            targetArray[1].setActionTiming(1);
+        }
+        if (actionArray[0] != targetArray[0] && actionArray[1].currentAction().item().meta.srpgUncounterable) {
+            targetArray[1].clearActions();
+        }
+		
+		//Adds check for srpgUncounterable for passive states #Boomy edit
+		var currentUser = actionArray[1];
+		for(var i = 0; i < actionArray[1].states().length; i++) {
+			if(eval(actionArray[1].states()[i].meta.srpgUncounterable)) {
+				targetArray[1].clearActions();			
+				break;
+			}
+		}
+		
+        //this.preBattleSetDirection();
+        //行動回数追加スキルなら行動回数を追加する
+        var addActionNum = Number(actionArray[1].action(0).item().meta.addActionTimes);
+        if (addActionNum && addActionNum > 0) {
+            actionArray[1].SRPGActionTimesAdd(addActionNum);
+        }
+        this._callSrpgBattle = true;
+        this.eventBeforeBattle();
+			
+		} else {
+		$gameTemp._aoeEffect = true;
         //Determine if we targetting foes, the user or allies
         var targetTeam;
         //Remove all party members (enemy and actor) from the game (temporarily)
@@ -206,6 +284,8 @@
         }
         this._callSrpgBattle = true;
         this.eventBeforeBattle();
+		  
+		}
     };
     //Kill units that were affected by AreaTargets
     var _Scene_Map_srpgBattlerDeadAfterBattle = Scene_Map.prototype.srpgBattlerDeadAfterBattle;
@@ -227,8 +307,13 @@
                 }
             }
         }
-        $gameTemp.clearAreaTargets();
+		if($gameTemp._aoeEffect == true) {
+      $gameTemp.clearAreaTargets();
+		$gameTemp._aoeEffect = false;
+		}
     };
+	
+
     // SRPG戦闘用のウィンドウを作る
     Scene_Battle.prototype.createSprgBattleStatusWindow = function () {
         this._srpgBattleStatusWindowLeft = new Window_SrpgBattleStatus(0);
