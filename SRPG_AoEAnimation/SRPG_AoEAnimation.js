@@ -33,6 +33,10 @@
  * Works best with animations set to SCREEN though animations that target individuals still work (they just happened sequentially on the same battle field)
  * This script also removes the target's battle hud if there's more than 1 target to avoid confusion
  *
+ * Instructions:
+ * Add <AoEAnimation> tag to skills where you want multiple targets to appear on one battle scene
+ * Make sure skill is set to ALL enemies or ALL Allies
+ *
  */
 (function () {
     var substrBegin = document.currentScript.src.lastIndexOf('/');
