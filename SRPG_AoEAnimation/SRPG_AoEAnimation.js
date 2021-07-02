@@ -72,220 +72,162 @@
             _SRPG_Game_Troop_setup.call(this, troopId);
         }
     };
-	
-	  Scene_Map.prototype.srpgBattleStart = function (actionArray, targetArray) {
-		//Check if use regular AoE animation or not
-		if( actionArray[1].currentAction().item().meta.defaultAoE === true) {
-			$gameTemp._aoeEffect = false;
-		$gameParty.clearSrpgBattleActors();
-        $gameTroop.clearSrpgBattleEnemys();
-        if (actionArray[0] === 'actor') {
-            $gameParty.pushSrpgBattleActors(actionArray[1]);
-            if (targetArray[0] === 'actor') {
-                if (actionArray[1] != targetArray[1]) {
-                    $gameParty.pushSrpgBattleActors(targetArray[1]);
-                    actionArray[1].action(0).setTarget(1);
-                } else {
-                    actionArray[1].action(0).setTarget(0);
-                }
-            } else if (targetArray[0] === 'enemy') {
-                $gameTroop.pushSrpgBattleEnemys(targetArray[1]);
-                actionArray[1].action(0).setTarget(0);
-            }
-        } else if (actionArray[0] === 'enemy') {
-            $gameTroop.pushSrpgBattleEnemys(actionArray[1]);
-            actionArray[1].action(0).setSrpgEnemySubject(0);
-            if (targetArray[0] === 'actor') {
-                $gameParty.pushSrpgBattleActors(targetArray[1]);
-                actionArray[1].action(0).setTarget(0);
-            } else if (targetArray[0] === 'enemy') {
-                if (actionArray[1] != targetArray[1]) {
-                    $gameTroop.pushSrpgBattleEnemys(targetArray[1]);
-                    actionArray[1].action(0).setTarget(1);
-                } else {
-                    actionArray[1].action(0).setTarget(0);
-                }
-            }
-        }
-        actionArray[1].setActionTiming(0);
-        if ($dataTroops[PluginManager.parameters('SRPG_core').srpgTroopID]) {
-            BattleManager.setup(PluginManager.parameters('SRPG_core').srpgTroopID, false, true);
+    var _SRPG_Game_Temp_initialize = Game_Temp.prototype.initialize;
+    Game_Temp.prototype.initialize = function () {
+        _SRPG_Game_Temp_initialize.call(this);
+        this._aoeEffect = false;
+    }
+    //This fixes the glitch where if mapBattle is ON but a skill with the tag <mapBattle:false> is set, the battle result screen appears prior to the action being executed
+    //This results in the user gaining exp twice (if user = player), once prior to skill and once after the skill
+    //This glitch happens as by default, the srpg_core.js script checks if map battle is on via $gameSystem.useMapBattle() but this function does not check if a skill has the <mapBattle:false> tag on or not
+    //This new function fixes this problem by using the $gameTemp._aoeEffect which is set when an AoE attack with single AoE animation occurs
+    //If the developer creates a skill where <mapBattle:false> and the skill is not a single AoE animation, then this glitch will still occur 
+    var _USEMAPBATTLE = Game_System.prototype.useMapBattle;
+    Game_System.prototype.useMapBattle = function () {
+        if ($gameTemp._aoeEffect === true) {
+            return false;
         } else {
-            BattleManager.setup(1, false, true);
+            _USEMAPBATTLE.call(this);
         }
-        //対象の行動を設定
-        if (actionArray[1] != targetArray[1]) {
-            targetArray[1].srpgMakeNewActions();
-            if (actionArray[0] === 'actor' && targetArray[0] === 'enemy' && targetArray[1].canMove()) {
-                targetArray[1].action(0).setSrpgEnemySubject(0);
-                targetArray[1].action(0).setAttack();
-                targetArray[1].action(0).setTarget(0);
-            }
-            if (actionArray[0] === 'enemy' && targetArray[0] === 'actor' && targetArray[1].canMove()) {
-                targetArray[1].action(0).setAttack();
-                targetArray[1].action(0).setTarget(0);
-            }
-            targetArray[1].setActionTiming(1);
-        }
-        if (actionArray[0] != targetArray[0] && actionArray[1].currentAction().item().meta.srpgUncounterable) {
-            targetArray[1].clearActions();
-        }
-		
-		//Adds check for srpgUncounterable for passive states #Boomy edit
-		var currentUser = actionArray[1];
-		for(var i = 0; i < actionArray[1].states().length; i++) {
-			if(eval(actionArray[1].states()[i].meta.srpgUncounterable)) {
-				targetArray[1].clearActions();			
-				break;
-			}
-		}
-		
-        //this.preBattleSetDirection();
-        //行動回数追加スキルなら行動回数を追加する
-        var addActionNum = Number(actionArray[1].action(0).item().meta.addActionTimes);
-        if (addActionNum && addActionNum > 0) {
-            actionArray[1].SRPGActionTimesAdd(addActionNum);
-        }
-        this._callSrpgBattle = true;
-        this.eventBeforeBattle();
-			
-		} else {
-		$gameTemp._aoeEffect = true;
-        //Determine if we targetting foes, the user or allies
-        var targetTeam;
-        //Remove all party members (enemy and actor) from the game (temporarily)
-        $gameParty.clearSrpgBattleActors();
-        $gameTroop.clearSrpgBattleEnemys();
-        //Check if user is targetArray or in AreaTargets();
-        var userIsTarget = false;
-        var userIsAdded = false;
-        if ($gameTemp._areaTargets !== undefined) { //Multiple units selected, check if any are the active unit 
-            if ($gameTemp._areaTargets.length == 0) {} else {
-                for (var j = 0; j < $gameTemp._areaTargets.length; j++) {
-                    if ($gameSystem.EventToUnit($gameTemp._areaTargets[j].event._eventId)[1] == actionArray[1]) { //Actor found, add them to the battle 
-                        $gameTemp._areaTargets.splice(j, 1);
-                        if (actionArray[0] === 'actor') {
-                            $gameParty.pushSrpgBattleActors(actionArray[1]);
-                        } else if (actionArray[0] === 'enemy') {
-                            $gameTroop.pushSrpgBattleEnemys(actionArray[1]);
+    };
+    var _srpgBattleStart_AoE = Scene_Map.prototype.srpgBattleStart;
+    Scene_Map.prototype.srpgBattleStart = function (actionArray, targetArray) {
+        //Check if use regular AoE animation or not
+        if (actionArray[1].currentAction().item().meta.AoEAnimation === true) {
+            $gameTemp._aoeEffect = true;
+            //Determine if we targetting foes, the user or allies
+            var targetTeam;
+            //Remove all party members (enemy and actor) from the game (temporarily)
+            $gameParty.clearSrpgBattleActors();
+            $gameTroop.clearSrpgBattleEnemys();
+            //Check if user is targetArray or in AreaTargets();
+            var userIsTarget = false;
+            var userIsAdded = false;
+            if ($gameTemp._areaTargets !== undefined) { //Multiple units selected, check if any are the active unit 
+                if ($gameTemp._areaTargets.length == 0) {} else {
+                    for (var j = 0; j < $gameTemp._areaTargets.length; j++) {
+                        if ($gameSystem.EventToUnit($gameTemp._areaTargets[j].event._eventId)[1] == actionArray[1]) { //Actor found, add them to the battle 
+                            $gameTemp._areaTargets.splice(j, 1);
+                            if (actionArray[0] === 'actor') {
+                                $gameParty.pushSrpgBattleActors(actionArray[1]);
+                            } else if (actionArray[0] === 'enemy') {
+                                $gameTroop.pushSrpgBattleEnemys(actionArray[1]);
+                            }
+                            userIsTarget = true;
+                            break;
                         }
-                        userIsTarget = true;
-                        break;
                     }
                 }
             }
-        }
-        if (actionArray[1] == targetArray[1]) { //User is the target
+            if (actionArray[1] == targetArray[1]) { //User is the target
+                if (actionArray[0] === 'actor') {
+                    $gameParty.pushSrpgBattleActors(actionArray[1]);
+                } else if (actionArray[0] === 'enemy') {
+                    $gameTroop.pushSrpgBattleEnemys(actionArray[1]);
+                }
+                userIsAdded = true;
+                userIsTarget = true;
+            }
+            //Add user 
+            if (!userIsTarget) {
+                if (actionArray[0] === 'actor') {
+                    $gameParty.pushSrpgBattleActors(actionArray[1]);
+                } else if (actionArray[0] === 'enemy') {
+                    $gameTroop.pushSrpgBattleEnemys(actionArray[1]);
+                }
+            }
+            //Add target to the battle 
             if (actionArray[0] === 'actor') {
-                $gameParty.pushSrpgBattleActors(actionArray[1]);
+                if (targetArray[0] === 'actor') {
+                    targetTeam = "allies";
+                    if (!userIsAdded) {
+                        $gameParty.pushSrpgBattleActors(targetArray[1]); //Add friendly ally to player team
+                    }
+                    //Set the action of the 'active unit' to be the ally
+                    actionArray[1].action(0).setTarget(1);
+                } else if (targetArray[0] === 'enemy') {
+                    targetTeam = "foes";
+                    $gameTroop.pushSrpgBattleEnemys(targetArray[1]); // Add enemy to enemy team 
+                    actionArray[1].action(0).setTarget(0);
+                }
+                //If the 'active unit' is an enemy, add them to the battle as the 'active unit'
             } else if (actionArray[0] === 'enemy') {
-                $gameTroop.pushSrpgBattleEnemys(actionArray[1]);
-            }
-            userIsAdded = true;
-            userIsTarget = true;
-        }
-        //Add user 
-        if (!userIsTarget) {
-            if (actionArray[0] === 'actor') {
-                $gameParty.pushSrpgBattleActors(actionArray[1]);
-            } else if (actionArray[0] === 'enemy') {
-                $gameTroop.pushSrpgBattleEnemys(actionArray[1]);
-            }
-        }
-        //Add target to the battle 
-        if (actionArray[0] === 'actor') {
-            if (targetArray[0] === 'actor') {
-                targetTeam = "allies";
-                //$gameTemp.addAreaTarget({item: targetArray[1].action(0), event: targetArray[1].event()});
-                if (!userIsAdded) {
-                    $gameParty.pushSrpgBattleActors(targetArray[1]);
-                }
-                //Set the action of the 'active unit' to be the ally
-                actionArray[1].action(0).setTarget(1);
-            } else if (targetArray[0] === 'enemy') {
-                targetTeam = "foes";
-                //$gameTemp.addAreaTarget({item: targetArray[1].action(0), event: targetArray[1].event()});
-                if (!userIsAdded) {
-                    $gameTroop.pushSrpgBattleEnemys(targetArray[1]);
-                }
-                actionArray[1].action(0).setTarget(0);
-            }
-            //If the 'active unit' is an enemy, add them to the battle as the 'active unit'
-        } else if (actionArray[0] === 'enemy') {
-            actionArray[1].action(0).setSrpgEnemySubject(0);
-            if (targetArray[0] === 'actor') {
-                targetTeam = "foes";
-                //$gameTemp.addAreaTarget({item: targetArray[1].action(0), event: targetArray[1].event()});
-                if (!userIsAdded) {
-                    $gameParty.pushSrpgBattleActors(targetArray[1]);
-                }
-                actionArray[1].action(0).setTarget(0);
-            } else if (targetArray[0] === 'enemy') {
-                targetTeam = "allies";
-                //$gameTemp.addAreaTarget({item: targetArray[1].action(0), event: targetArray[1].event()});
-                if (!userIsAdded) {
-                    $gameTroop.pushSrpgBattleEnemys(targetArray[1]);
-                }
-                actionArray[1].action(0).setTarget(1);
-            }
-        }
-        //Go through $gameTemp.areaTargets() and add them to battle as well
-        if ($gameTemp._areaTargets !== undefined) {
-            for (var i = 0; i < $gameTemp.areaTargets().length; i++) {
-                if (actionArray[0] == 'actor' && targetTeam == "allies") {
-                    $gameParty.pushSrpgBattleActors($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1]);
-                } else if (actionArray[0] == 'actor' && targetTeam == "foes") {
-                    $gameTroop.pushSrpgBattleEnemys($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1]);
-                } else if (actionArray[0] == 'enemy' && targetTeam == "foes") {
-                    $gameParty.pushSrpgBattleActors($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1]);
-                } else if (actionArray[0] == 'enemy' && targetTeam == "allies") {
-                    $gameTroop.pushSrpgBattleEnemys($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1]);
+                actionArray[1].action(0).setSrpgEnemySubject(0);
+                if (targetArray[0] === 'actor') {
+                    targetTeam = "foes";
+                    $gameParty.pushSrpgBattleActors(targetArray[1]); //Add opposing player unit to player team
+                    actionArray[1].action(0).setTarget(0);
+                } else if (targetArray[0] === 'enemy') {
+                    targetTeam = "allies";
+                    if (!userIsAdded) {
+                        $gameTroop.pushSrpgBattleEnemys(targetArray[1]); //Add allied enemy to enemy team
+                    }
+                    actionArray[1].action(0).setTarget(1);
                 }
             }
-        }
-        //Remove area targets so we don't end up attacking units individually after an AoE skill
-        actionArray[1].setActionTiming(0); //_srpgActionTiming = 0 means this unit is attacker, if its 1 then the unit is the defender (that can counter attack)
-        //Setup the troop data (by default it will use Troop map 1 as the battle)
-        BattleManager.setup(1, false, true);
-        //if ($dataTroops[_srpgTroopID]) {
-        //   BattleManager.setup(_srpgTroopID, false, true);
-        //} else {
-        //}
-        //If target and 'active unit' are not the same, set counter-attack targets (if both units are on opposing teams)
-        if (actionArray[1] != targetArray[1]) {
-            targetArray[1].srpgMakeNewActions();
-            if (actionArray[0] === 'actor' && targetArray[0] === 'enemy' && targetArray[1].canMove()) {
-                targetArray[1].action(0).setSrpgEnemySubject(0);
-                targetArray[1].action(0).setAttack();
-                targetArray[1].action(0).setTarget(0);
+            //Go through $gameTemp.areaTargets() and add them to battle as well
+            if ($gameTemp._areaTargets !== undefined) {
+                for (var i = 0; i < $gameTemp.areaTargets().length; i++) {
+                    if (actionArray[0] == 'actor' && targetTeam == "allies") {
+                        $gameParty.pushSrpgBattleActors($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1]);
+                    } else if (actionArray[0] == 'actor' && targetTeam == "foes") {
+                        $gameTroop.pushSrpgBattleEnemys($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1]);
+                    } else if (actionArray[0] == 'enemy' && targetTeam == "foes") {
+                        $gameParty.pushSrpgBattleActors($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1]);
+                    } else if (actionArray[0] == 'enemy' && targetTeam == "allies") {
+                        $gameTroop.pushSrpgBattleEnemys($gameSystem.EventToUnit($gameTemp.areaTargets()[i].event._eventId)[1]);
+                    }
+                }
             }
-            if (actionArray[0] === 'enemy' && targetArray[0] === 'actor' && targetArray[1].canMove()) {
-                targetArray[1].action(0).setAttack();
-                targetArray[1].action(0).setTarget(0);
+            //Remove area targets so we don't end up attacking units individually after an AoE skill
+            actionArray[1].setActionTiming(0); //_srpgActionTiming = 0 means this unit is attacker, if its 1 then the unit is the defender (that can counter attack)
+            //Setup the troop data (by default it will use Troop map 1 as the battle)
+            BattleManager.setup(1, false, true);
+            //if ($dataTroops[_srpgTroopID]) {
+            //   BattleManager.setup(_srpgTroopID, false, true);
+            //} else {
+            //}
+            //If target and 'active unit' are not the same, set counter-attack targets (if both units are on opposing teams)
+            if (actionArray[1] != targetArray[1]) {
+                targetArray[1].srpgMakeNewActions();
+                if (actionArray[0] === 'actor' && targetArray[0] === 'enemy' && targetArray[1].canMove()) {
+                    targetArray[1].action(0).setSrpgEnemySubject(0);
+                    targetArray[1].action(0).setAttack();
+                    targetArray[1].action(0).setTarget(0);
+                }
+                if (actionArray[0] === 'enemy' && targetArray[0] === 'actor' && targetArray[1].canMove()) {
+                    targetArray[1].action(0).setAttack();
+                    targetArray[1].action(0).setTarget(0);
+                }
+                targetArray[1].setActionTiming(1);
             }
-            targetArray[1].setActionTiming(1);
-        }
-        if (actionArray[0] != targetArray[0] && actionArray[1].currentAction().item().meta.srpgUncounterable) {
-            targetArray[1].clearActions();
-        }
-        //Adds check for srpgUncounterable for passive states #Boomy edit
-        var currentUser = actionArray[1];
-        for (var i = 0; i < actionArray[1].states().length; i++) {
-            if (eval(actionArray[1].states()[i].meta.srpgUncounterable)) {
+            if (actionArray[0] != targetArray[0] && actionArray[1].currentAction().item().meta.srpgUncounterable) {
                 targetArray[1].clearActions();
-                break;
             }
+            //Adds check for srpgUncounterable for passive states #Boomy edit
+            var currentUser = actionArray[1];
+            for (var i = 0; i < actionArray[1].states().length; i++) {
+                if (eval(actionArray[1].states()[i].meta.srpgUncounterable)) {
+                    targetArray[1].clearActions();
+                    break;
+                }
+            }
+            //this.preBattleSetDirection();
+            var addActionNum = Number(actionArray[1].action(0).item().meta.addActionTimes);
+            if (addActionNum && addActionNum > 0) {
+                actionArray[1].SRPGActionTimesAdd(addActionNum);
+            }
+            // pre-skill setup
+            $gameSystem.clearSrpgStatusWindowNeedRefresh();
+            $gameSystem.clearSrpgBattleWindowNeedRefresh();
+            this._srpgBattleResultWindowCount = 0;
+            // Call the battle 
+            this._callSrpgBattle = true;
+            this.eventBeforeBattle();
+        } else {
+            _srpgBattleStart_AoE.call(this, actionArray, targetArray);
+            $gameTemp._aoeEffect = false;
         }
-        //this.preBattleSetDirection();
-        //行動回数追加スキルなら行動回数を追加する
-        var addActionNum = Number(actionArray[1].action(0).item().meta.addActionTimes);
-        if (addActionNum && addActionNum > 0) {
-            actionArray[1].SRPGActionTimesAdd(addActionNum);
-        }
-        this._callSrpgBattle = true;
-        this.eventBeforeBattle();
-		  
-		}
     };
     //Kill units that were affected by AreaTargets
     var _Scene_Map_srpgBattlerDeadAfterBattle = Scene_Map.prototype.srpgBattlerDeadAfterBattle;
@@ -307,13 +249,11 @@
                 }
             }
         }
-		if($gameTemp._aoeEffect == true) {
-      $gameTemp.clearAreaTargets();
-		$gameTemp._aoeEffect = false;
-		}
+        if ($gameTemp._aoeEffect == true) {
+            $gameTemp.clearAreaTargets();
+            $gameTemp._aoeEffect = false;
+        }
     };
-	
-
     // SRPG戦闘用のウィンドウを作る
     Scene_Battle.prototype.createSprgBattleStatusWindow = function () {
         this._srpgBattleStatusWindowLeft = new Window_SrpgBattleStatus(0);
@@ -323,27 +263,21 @@
         //Boomy edit for AoE display 
         if ($gameParty.battleMembers().length == 1 && $gameTroop.members().length == 0) {
             this._srpgBattleStatusWindowRight.setBattler($gameParty.battleMembers()[0]);
-        }
-        if ($gameParty.battleMembers().length == 0 && $gameTroop.members().length == 1) {
+        } else if ($gameParty.battleMembers().length == 0 && $gameTroop.members().length == 1) {
             this._srpgBattleStatusWindowRight.setBattler($gameTroop.members()[0]);
-        }
-        if ($gameParty.battleMembers().length == 1 && $gameTroop.members().length == 1) {
+        } else if ($gameParty.battleMembers().length == 1 && $gameTroop.members().length == 1) {
             this._srpgBattleStatusWindowLeft.setBattler($gameTroop.members()[0]);
             this._srpgBattleStatusWindowRight.setBattler($gameParty.battleMembers()[0]);
-        }
-        if ($gameParty.battleMembers().length == 2 && $gameTroop.members().length == 0) {
+        } else if ($gameParty.battleMembers().length == 2 && $gameTroop.members().length == 0) {
             this._srpgBattleStatusWindowLeft.setBattler($gameParty.battleMembers()[1]);
             this._srpgBattleStatusWindowRight.setBattler($gameParty.battleMembers()[0]);
-        }
-        if ($gameParty.battleMembers().length == 0 && $gameTroop.members().length == 2) {
+        } else if ($gameParty.battleMembers().length == 0 && $gameTroop.members().length == 2) {
             this._srpgBattleStatusWindowRight.setBattler($gameTroop.members()[0]);
             this._srpgBattleStatusWindowLeft.setBattler($gameTroop.members()[1]);
-        }
-        if ($gameParty.battleMembers().length > 2) {
+        } else if ($gameParty.battleMembers().length > 2) {
             this._srpgBattleStatusWindowRight.setBattler($gameParty.battleMembers()[0]);
-        }
-        if ($gameTroop.members().length > 2) {
-            this._srpgBattleStatusWindowRight.setBattler($gameTroop.members()[0]);
+        } else if ($gameTroop.members().length > 2) {
+            this._srpgBattleStatusWindowRight.setBattler($gameParty.battleMembers()[0]);
         }
         this.addWindow(this._srpgBattleStatusWindowLeft);
         this.addWindow(this._srpgBattleStatusWindowRight);
