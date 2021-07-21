@@ -64,11 +64,12 @@
             this.clear();
             this._troopId = troopId;
             this._enemies = [];
+			console.log($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item());
             for (var i = 0; i < this.SrpgBattleEnemys().length; i++) {
                 var enemy = this.SrpgBattleEnemys()[i];
                 var index = i;
                 enemy._screenX = eval(parameters['Enemy Position X']);
-                enemy._screenY = eval(parameters['Actor Position Y']);
+                enemy._screenY = eval(parameters['Enemy Position Y']);
                 this._enemies.push(enemy);
             }
             this.makeUniqueNames();
@@ -94,7 +95,7 @@
             return _USEMAPBATTLE.call(this);
         }
     };
-    var _srpgBattleStart_AoE = Scene_Map.prototype.srpgBattleStart;
+
     Scene_Map.prototype.srpgBattleStart = function (actionArray, targetArray) {
         //Check if use regular AoE animation or not
         if (actionArray[1].currentAction().item().meta.AoEAnimation === true) {
@@ -229,85 +230,158 @@
             this._callSrpgBattle = true;
             this.eventBeforeBattle();
         } else { //Not an AOE effect 
-            $gameTemp._aoeEffect = false;
-            // get the data
-            var user = actionArray[1];
-            var target = targetArray[1];
-            var action = user.action(0);
-            var reaction = null;
-            // check if we're using map battle on this skill
-            if (action && action.item()) {
-                var mapBattleTag = action.item().meta.mapBattle;
-                if (mapBattleTag == 'true') $gameSystem.forceSRPGBattleMode('map');
-                else if (mapBattleTag == 'false') $gameSystem.forceSRPGBattleMode('normal');
-            }
-            if (!$gameSystem.useMapBattle()) {
-                console.log("SDdsdssd");
-                _srpgBattleStart_AoE.call(this, actionArray, targetArray);
-                return;
-            }
-            // prepare action timing
-            user.setActionTiming(0);
-            if (user != target) target.setActionTiming(1);
-            // pre-skill setup
-            $gameSystem.clearSrpgStatusWindowNeedRefresh();
-            $gameSystem.clearSrpgBattleWindowNeedRefresh();
-            this._srpgBattleResultWindowCount = 0;
-            // make free actions work
-            var addActionTimes = Number(action.item().meta.addActionTimes || 0);
-            if (addActionTimes > 0) {
-                user.SRPGActionTimesAdd(addActionTimes);
-            }
-            this.preBattleSetDirection();
-            this.eventBeforeBattle();
-            // set up the troop and the battle party
-            $gameTroop.clearSrpgBattleEnemys();
-            $gameTroop.clear();
-            $gameParty.clearSrpgBattleActors();
-            if (actionArray[0] === 'enemy') $gameTroop.pushSrpgBattleEnemys(user);
-            else $gameParty.pushSrpgBattleActors(user);
-            if (targetArray[0] === 'enemy') $gameTroop.pushSrpgBattleEnemys(target);
-            else $gameParty.pushSrpgBattleActors(target);
-            BattleManager.setup(PluginManager.parameters('SRPG_core')._srpgTroopID, false, true);
-            action.setSubject(user);
-            // queue the action
-            this.srpgAddMapSkill(action, user, target);
-            // queue up counterattack
-            if (actionArray[0] !== targetArray[0] && target.canMove() && !action.item().meta.srpgUncounterable) {
-                target.srpgMakeNewActions();
-                reaction = target.action(0);
-                reaction.setSubject(target);
-                reaction.setAttack();
-                var actFirst = (reaction.speed() > action.speed());
-                if (PluginManager.parameters('SRPG_core').srpgUseAgiAttackPlus == 'true') actFirst = false;
-                this.srpgAddMapSkill(reaction, target, user, actFirst);
-            }
-            // agi attack plus
-            if (PluginManager.parameters('SRPG_core').srpgUseAgiAttackPlus == 'true') {
-                if (user.agi >= target.agi) {
-                    var firstBattler = user;
-                    var secondBattler = target;
+		    $gameTemp._aoeEffect = false;
+			// get the data
+		var user = actionArray[1];
+		var target = targetArray[1];
+		var action = user.action(0);
+		var reaction = null;
+
+		// check if we're using map battle on this skill
+		if (action && action.item()) {
+			var mapBattleTag = action.item().meta.mapBattle;
+			if (mapBattleTag == 'true') $gameSystem.forceSRPGBattleMode('map');
+			else if (mapBattleTag == 'false') $gameSystem.forceSRPGBattleMode('normal');
+		}
+		if (!$gameSystem.useMapBattle()) {
+        $gameParty.clearSrpgBattleActors();
+        $gameTroop.clearSrpgBattleEnemys();
+        if (actionArray[0] === 'actor') {
+			
+            $gameParty.pushSrpgBattleActors(actionArray[1]);
+            if (targetArray[0] === 'actor') {
+                if (actionArray[1] != targetArray[1]) {
+                    $gameParty.pushSrpgBattleActors(targetArray[1]);
+                    actionArray[1].action(0).setTarget(1);
                 } else {
-                    var firstBattler = target;
-                    var secondBattler = user;
+                    actionArray[1].action(0).setTarget(0);
                 }
-                if (!firstBattler.currentAction() || !firstBattler.currentAction().item()) {
-                    return;
-                }
-                if (firstBattler.currentAction().isForOpponent() && !firstBattler.currentAction().item().meta.doubleAction) {
-                    var dif = firstBattler.agi - secondBattler.agi;
-                    var difMax = secondBattler.agi * _srpgAgilityAffectsRatio - secondBattler.agi;
-                    if (difMax == 0) {
-                        agilityRate = 100;
-                    } else {
-                        agilityRate = dif / difMax * 100;
-                    }
-                    if (agilityRate > Math.randomInt(100)) {
-                        var agiAction = firstBattler.action(0);
-                        this.srpgAddMapSkill(agiAction, firstBattler, secondBattler)
-                    }
+            } else if (targetArray[0] === 'enemy') {
+                $gameTroop.pushSrpgBattleEnemys(targetArray[1]);
+                actionArray[1].action(0).setTarget(0);
+            }
+        } else if (actionArray[0] === 'enemy') {
+            $gameTroop.pushSrpgBattleEnemys(actionArray[1]);
+            actionArray[1].action(0).setSrpgEnemySubject(0);
+            if (targetArray[0] === 'actor') {
+                $gameParty.pushSrpgBattleActors(targetArray[1]);
+                actionArray[1].action(0).setTarget(0);
+            } else if (targetArray[0] === 'enemy') {
+                if (actionArray[1] != targetArray[1]) {
+                    $gameTroop.pushSrpgBattleEnemys(targetArray[1]);
+                    actionArray[1].action(0).setTarget(1);
+                } else {
+                    actionArray[1].action(0).setTarget(0);
                 }
             }
+        }
+        actionArray[1].setActionTiming(0);
+		
+        if ($dataTroops[PluginManager.parameters('SRPG_core')._srpgTroopID]) {
+            BattleManager.setup(PluginManager.parameters('SRPG_core')._srpgTroopID, false, true);
+        } else {
+            BattleManager.setup(1, false, true);
+        }
+        //対象の行動を設定
+        if (actionArray[1] != targetArray[1]) {
+            targetArray[1].srpgMakeNewActions();
+            if (actionArray[0] === 'actor' && targetArray[0] === 'enemy' &&
+                targetArray[1].canMove()) {
+                targetArray[1].action(0).setSrpgEnemySubject(0);
+                targetArray[1].action(0).setAttack();
+                targetArray[1].action(0).setTarget(0);
+            }
+            if (actionArray[0] === 'enemy' && targetArray[0] === 'actor' &&
+                targetArray[1].canMove()) {
+                targetArray[1].action(0).setAttack();
+                targetArray[1].action(0).setTarget(0);
+            }
+            targetArray[1].setActionTiming(1);
+        }
+        if (actionArray[0] != targetArray[0] && actionArray[1].currentAction().item().meta.srpgUncounterable) {
+            targetArray[1].clearActions();
+        }
+        //this.preBattleSetDirection(); //EDIT (Compatability with direction Selection BOOMY)
+        //行動回数追加スキルなら行動回数を追加する
+        var addActionNum = Number(actionArray[1].action(0).item().meta.addActionTimes);
+        if (addActionNum && addActionNum > 0) {
+            actionArray[1].SRPGActionTimesAdd(addActionNum);
+        }
+        this._callSrpgBattle = true;
+        this.eventBeforeBattle();
+		} else {
+
+		// prepare action timing
+		user.setActionTiming(0);
+		if (user != target) target.setActionTiming(1);
+
+		// pre-skill setup
+		$gameSystem.clearSrpgStatusWindowNeedRefresh();
+		$gameSystem.clearSrpgBattleWindowNeedRefresh();
+		this._srpgBattleResultWindowCount = 0;
+
+		// make free actions work
+		var addActionTimes = Number(action.item().meta.addActionTimes || 0);
+		if (addActionTimes > 0) {
+			user.SRPGActionTimesAdd(addActionTimes);
+		}
+
+		//this.preBattleSetDirection();
+		this.eventBeforeBattle();
+
+		// set up the troop and the battle party
+		$gameTroop.clearSrpgBattleEnemys();
+		$gameTroop.clear();
+		$gameParty.clearSrpgBattleActors();
+		if (actionArray[0] === 'enemy') $gameTroop.pushSrpgBattleEnemys(user);
+		else $gameParty.pushSrpgBattleActors(user);
+		if (targetArray[0] === 'enemy') $gameTroop.pushSrpgBattleEnemys(target);
+		else $gameParty.pushSrpgBattleActors(target);
+		BattleManager.setup(PluginManager.parameters('SRPG_core')._srpgTroopID, false, true);
+		action.setSubject(user);
+
+		// queue the action
+		this.srpgAddMapSkill(action, user, target);
+
+		// queue up counterattack
+		if (actionArray[0] !== targetArray[0] && target.canMove() && !action.item().meta.srpgUncounterable) {
+			target.srpgMakeNewActions();
+			reaction = target.action(0);
+			reaction.setSubject(target);
+			reaction.setAttack();
+			var actFirst = (reaction.speed() > action.speed());
+			if (PluginManager.parameters('SRPG_core').srpgUseAgiAttackPlus == 'true') actFirst = false;
+			this.srpgAddMapSkill(reaction, target, user, actFirst);
+		}
+
+                // agi attack plus
+                if (PluginManager.parameters('SRPG_core').srpgUseAgiAttackPlus == 'true') {
+                    if (user.agi >= target.agi) {
+                        var firstBattler = user;
+                        var secondBattler = target;
+                    } else {
+                        var firstBattler = target;
+                        var secondBattler = user;
+                    }
+                    if (!firstBattler.currentAction() || !firstBattler.currentAction().item()) {
+                        return;
+                    }
+                    if (firstBattler.currentAction().isForOpponent() &&
+                        !firstBattler.currentAction().item().meta.doubleAction) {
+                        var dif = firstBattler.agi - secondBattler.agi;
+                        var difMax = secondBattler.agi * _srpgAgilityAffectsRatio - secondBattler.agi;
+                        if (difMax == 0) {
+                            agilityRate = 100;
+                        } else {
+                            agilityRate = dif / difMax * 100;
+                        }
+                        if (agilityRate > Math.randomInt(100)) {
+                            var agiAction = firstBattler.action(0);
+                            this.srpgAddMapSkill(agiAction, firstBattler, secondBattler)
+                        }
+                    }
+                }
+		}
         }
     };
     //Kill units that were affected by AreaTargets
