@@ -19,12 +19,20 @@
  * 
  * @param Enemy Position X
  * @desc Formula for where actors are place on the battlefield
- * @default  216 + index * 64
+ * @default  216 - index * 64
  * 
  * @param Enemy Position Y
  * @desc Formula for where actors are place on the battlefield
  * @default  Graphics.height / 2 + 48 * index
+ *
+ * @param Center Position X
+ * @desc Formula for where units are placed in the middle of the battlefield
+ * @default  Graphics.width / 2
  * 
+ * @param Center Position Y
+ * @desc Formula for where units are placed in the middle of the battlefield 
+ * @default  Graphics.height / 2
+ *  
  * @help
  * This plugin is a work in progress!
  * Credits to: Dopan, Dr. Q, Traverse, SoulPour777
@@ -42,35 +50,153 @@
  * If not, then add <AoEAnimation> tag to skills where you want multiple targets to appear on one battle scene
  * Make sure skill is set to ALL enemies or ALL Allies
  *
+ * Default positions of actors and enemies:
+ * Index references the order of which units are displayed. The active target and active user have index values of 0
+ * For an AoE Attack, index will be assigned based on the nearest target to the center of the AoE. So the furthest target will have the largest index value
+ * By default, targets are staggered along the X and Y axis in a diagonal fashion and positioned in order as specified below:
+ * Example 1: [Enemy 3] [Enemy 2] [Enemy 1] [Enemy 0]                                       [User]
+ * Example 2:                                                             [Ally 1] [Ally 2] [User]
+ * This means the user is always behind allies (eg. using a buff) and the "active enemy" is always the closest to the user
+ *
+ * Starting formations:
+ * If a skill has AoEAnimation and <AoELineFormation>, then all targets will have the same Y coordinate (assumes index = 0 for all units) and thus line up in a straight line
+ * If a skill has AoEAnimation and <AoEDistantFormation:X>, then all targets will have their home X position altered by X
+ * If a skill has AoEAnimation and <AoESurroundFormation:X>, then all targets will be placed around the user with a radius of X
+ 
  */
 (function () {
+    //=================================================================================================
+    //Plugin Parameters
+    //=================================================================================================
     var substrBegin = document.currentScript.src.lastIndexOf('/');
     var substrEnd = document.currentScript.src.indexOf('.js');
     var scriptName = document.currentScript.src.substring(substrBegin + 1, substrEnd);
     var parameters = PluginManager.parameters(scriptName);
+    //=================================================================================================
     //Set actor positions
+    //=================================================================================================
     var _SRPG_YEP_Sprite_Actor_setActorHome = Sprite_Actor.prototype.setActorHome;
     Sprite_Actor.prototype.setActorHome = function (index) {
         if ($gameSystem.isSRPGMode() == true) {
-            this.setHome(eval(parameters['Actor Position X']), eval(parameters['Actor Position Y']));
+            var xModifier = 0;
+            if ($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoEDistantFormation) {
+                if ($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].isActor()) {
+                    xModifier = $gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoEDistantFormation;
+                } else {
+                    xModifier = -$gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoEDistantFormation;
+                }
+            }
+            if ($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoELineFormation) { //Line formation (set y = 0)
+                this.setHome(eval(parameters['Actor Position X']) + xModifier, eval(parameters['Actor Position Y'].replace("index", "0")));
+            } else if ($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoESurroundFormation) { //Surround formation (place units in a circle/ellipse formation)
+                //Check if AreaTargets (more than 1 target) is present
+                if ($gameTemp._areaTargets.length > 0) {
+                    //Check if user is also the target
+                    if ($gameTemp.activeEvent() == $gameTemp.targetEvent()) {
+                        if (index == 0) {
+                            this.setHome(eval(parameters['Center Position X']) + xModifier, eval(parameters['Center Position Y']));
+                        } else { //Allied team surround user 
+                            var radius = $gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoESurroundFormation;
+                            var angleIncrement = 360 / ($gameTemp._areaTargets.length + 0)
+                            this.setHome(eval(parameters['Center Position X']) + xModifier + Math.round(radius * Math.sin(Math.PI * 2 * angleIncrement * (index + 0.5) / 360)), eval(parameters['Center Position Y']) + Math.round(radius * Math.cos(Math.PI * 2 * angleIncrement * (index + 0.5) / 360)));
+                        }
+                    } else {
+                        //User is not the target, check if user is to be surrounded by foes or allies 
+                        if ($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].isActor()) {
+                            //If an actor is the user, then set index 0 to be in the middle
+                            if (index == 0) {
+                                this.setHome(eval(parameters['Center Position X']) + xModifier, eval(parameters['Center Position Y']));
+                            } else { //Allied team surround user 
+                                var radius = $gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoESurroundFormation;
+                                var angleIncrement = 360 / ($gameTemp._areaTargets.length + 0)
+                                this.setHome(eval(parameters['Center Position X']) + xModifier + Math.round(radius * Math.sin(Math.PI * 2 * angleIncrement * (index + 0.5) / 360)), eval(parameters['Center Position Y']) + Math.round(radius * Math.cos(Math.PI * 2 * angleIncrement * (index + 0.5) / 360)));
+                            }
+                        } else {
+                            //If actor is not the user, then actors are surrounding an enemy user
+                            var radius = $gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoESurroundFormation;
+                            var angleIncrement = 360 / ($gameTemp._areaTargets.length + 1)
+                            this.setHome(eval(parameters['Center Position X']) + xModifier + Math.round(radius * Math.sin(Math.PI * 2 * angleIncrement * (index + 0.5) / 360)), eval(parameters['Center Position Y']) + Math.round(radius * Math.cos(Math.PI * 2 * angleIncrement * (index + 0.5) / 360)));
+                        }
+                    }
+                } else { //Only 1 target (or none), set actor position as normal 
+                    this.setHome(eval(parameters['Actor Position X']) + xModifier, eval(parameters['Actor Position Y']));
+                }
+            } else {
+                //Standard formation
+                this.setHome(eval(parameters['Actor Position X']) + xModifier, eval(parameters['Actor Position Y']));
+            }
             this.moveToStartPosition();
         } else {
             _SRPG_YEP_Sprite_Actor_setActorHome.call(this, index);
         }
     };
+    //=================================================================================================
     //Set enemy positions
+    //=================================================================================================
     var _SRPG_Game_Troop_setup = Game_Troop.prototype.setup;
     Game_Troop.prototype.setup = function (troopId) {
         if ($gameSystem.isSRPGMode() == true) {
             this.clear();
             this._troopId = troopId;
             this._enemies = [];
-            //console.log($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item());
             for (var i = 0; i < this.SrpgBattleEnemys().length; i++) {
                 var enemy = this.SrpgBattleEnemys()[i];
                 var index = i;
-                enemy._screenX = eval(parameters['Enemy Position X']);
-                enemy._screenY = eval(parameters['Enemy Position Y']);
+                var xModifier = 0;
+                if ($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoEDistantFormation) {
+                    if ($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].isActor()) {
+                        xModifier = -$gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoEDistantFormation;
+                    } else {
+                        xModifier = $gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoEDistantFormation;
+                    }
+                }
+                if ($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoELineFormation) { //Line formation (set y = 0)
+                    enemy._screenX = eval(parameters['Enemy Position X']); + xModifier;
+                    enemy._screenY = eval(parameters['Enemy Position Y'].replace("index", "0"));
+                } else if ($gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoESurroundFormation) { //Surround formation (place units in a circle/ellipse formation)
+                    //Check if AreaTargets (more than 1 target) is present
+                    if ($gameTemp._areaTargets.length > 0) {
+                        //Check if user is the target
+                        if ($gameTemp.activeEvent() == $gameTemp.targetEvent()) {
+                            if (index == 0) {
+                                enemy._screenX = eval(parameters['Center Position X']) + xModifier;
+                                enemy._screenY = eval(parameters['Center Position Y']);
+                            } else { //Allied team surround user 
+                                var radius = $gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoESurroundFormation;
+                                var angleIncrement = 360 / ($gameTemp._areaTargets.length + 0)
+                                enemy._screenX = eval(parameters['Center Position X']) + xModifier + Math.round(radius * Math.sin(Math.PI * 2 * angleIncrement * (index + 0.5) / 360));
+                                enemy._screenY = eval(parameters['Center Position Y']) + Math.round(radius * Math.cos(Math.PI * 2 * angleIncrement * (index + 0.5) / 360));
+                            }
+                        } else {
+                            //Check if user is actor or enemy 
+                            if (!$gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].isActor()) {
+                                //If an enemy is the user, then set index 0 to be in the middle
+                                if (index == 0) {
+                                    enemy._screenX = eval(parameters['Center Position X']) + xModifier;
+                                    enemy._screenY = eval(parameters['Center Position Y']);
+                                } else { //Allied team surround user 
+                                    var radius = $gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoESurroundFormation;
+                                    var angleIncrement = 360 / ($gameTemp._areaTargets.length + 0)
+                                    enemy._screenX = eval(parameters['Center Position X']) + xModifier + Math.round(radius * Math.sin(Math.PI * 2 * angleIncrement * (index + 0.5) / 360));
+                                    enemy._screenY = eval(parameters['Center Position Y']) + Math.round(radius * Math.cos(Math.PI * 2 * angleIncrement * (index + 0.5) / 360));
+                                }
+                            } else {
+                                //If user is not part of the enemy team so set all enemies to surround the user
+                                var radius = $gameSystem.EventToUnit($gameTemp.activeEvent()._eventId)[1].currentAction().item().meta.AoESurroundFormation;
+                                var angleIncrement = 360 / ($gameTemp._areaTargets.length + 1)
+                                enemy._screenX = eval(parameters['Center Position X']) + xModifier + Math.round(radius * Math.sin(Math.PI * 2 * angleIncrement * (index + 0.5) / 360));
+                                enemy._screenY = eval(parameters['Center Position Y']) + Math.round(radius * Math.cos(Math.PI * 2 * angleIncrement * (index + 0.5) / 360));
+                            }
+                        }
+                    } else { //Only 1 target (or none), set actor position as normal 
+                        enemy._screenX = eval(parameters['Enemy Position X']); + xModifier;
+                        enemy._screenY = eval(parameters['Enemy Position Y']);
+                    }
+                } else {
+                    //Standard formation
+                    enemy._screenX = eval(parameters['Enemy Position X']); + xModifier;
+                    enemy._screenY = eval(parameters['Enemy Position Y']);
+                }
                 this._enemies.push(enemy);
             }
             this.makeUniqueNames();
@@ -78,11 +204,17 @@
             _SRPG_Game_Troop_setup.call(this, troopId);
         }
     };
+    //=================================================================================================
+    //Create a temporary variable that checks if an AoEAnimation is present or not (used to fix a bug)
+    //=================================================================================================
     var _SRPG_Game_Temp_initialize = Game_Temp.prototype.initialize;
     Game_Temp.prototype.initialize = function () {
         _SRPG_Game_Temp_initialize.call(this);
         this._aoeEffect = false;
     }
+    //=================================================================================================
+    //Bug fix for map battle 
+    //=================================================================================================
     //This fixes the glitch where if mapBattle is ON but a skill with the tag <mapBattle:false> is set, the battle result screen appears prior to the action being executed
     //This results in the user gaining exp twice (if user = player), once prior to skill and once after the skill
     //This glitch happens as by default, the srpg_core.js script checks if map battle is on via $gameSystem.useMapBattle() but this function does not check if a skill has the <mapBattle:false> tag on or not
@@ -96,9 +228,11 @@
             return _USEMAPBATTLE.call(this);
         }
     };
+    //=================================================================================================
+    //Rewrite of srpgBattleStart (which is created by srpg_core.js and re-alised by mapBattle
+    //=================================================================================================
     Scene_Map.prototype.srpgBattleStart = function (actionArray, targetArray) {
         //Check if use regular AoE animation or not
-        console.log(actionArray[1].currentAction().item().meta.srpgAreaRange);
         if (actionArray[1].currentAction().item().meta.AoEAnimation === true || (actionArray[1].currentAction().item().meta.srpgAreaRange >= 0 && eval(parameters['Enable By Default']))) {
             $gameTemp._aoeEffect = true;
             //Determine if we targetting foes, the user or allies
@@ -188,11 +322,11 @@
             //Remove area targets so we don't end up attacking units individually after an AoE skill
             actionArray[1].setActionTiming(0); //_srpgActionTiming = 0 means this unit is attacker, if its 1 then the unit is the defender (that can counter attack)
             //Setup the troop data (by default it will use Troop map 1 as the battle)
-            BattleManager.setup(1, false, true);
-            //if ($dataTroops[_srpgTroopID]) {
-            //   BattleManager.setup(_srpgTroopID, false, true);
-            //} else {
-            //}
+            if ($dataTroops[PluginManager.parameters('SRPG_core')._srpgTroopID]) {
+                BattleManager.setup(PluginManager.parameters('SRPG_core')._srpgTroopID, false, true);
+            } else {
+                BattleManager.setup(1, false, true);
+            }
             //If target and 'active unit' are not the same, set counter-attack targets (if both units are on opposing teams)
             if (actionArray[1] != targetArray[1]) {
                 targetArray[1].srpgMakeNewActions();
@@ -230,7 +364,10 @@
             // Call the battle 
             this._callSrpgBattle = true;
             this.eventBeforeBattle();
-        } else { //Not an AOE effect 
+        } else {
+            //=================================================================================================
+            //Not an AOE effect / the following code is copied from srpg_core.js (regular battle + mapBattle)
+            //=================================================================================================
             $gameTemp._aoeEffect = false;
             // get the data
             var user = actionArray[1];
@@ -243,6 +380,9 @@
                 if (mapBattleTag == 'true') $gameSystem.forceSRPGBattleMode('map');
                 else if (mapBattleTag == 'false') $gameSystem.forceSRPGBattleMode('normal');
             }
+            //=================================================================================================
+            //Regular SRPG Battle
+            //=================================================================================================
             if (!$gameSystem.useMapBattle()) {
                 $gameParty.clearSrpgBattleActors();
                 $gameTroop.clearSrpgBattleEnemys();
@@ -297,7 +437,11 @@
                 if (actionArray[0] != targetArray[0] && actionArray[1].currentAction().item().meta.srpgUncounterable) {
                     targetArray[1].clearActions();
                 }
-                //this.preBattleSetDirection(); //EDIT (Compatability with direction Selection BOOMY)
+                if (PluginManager.parameters('SRPG_DirectionSelection')['After Battle Direction Selection'] || PluginManager.parameters('Boomy_DirectionSelection')['After Battle Direction Selection']) {
+                    //this.preBattleSetDirection(); //EDIT (Compatability with direction Selection BOOMY)
+                } else {
+                    this.preBattleSetDirection();
+                }
                 //行動回数追加スキルなら行動回数を追加する
                 var addActionNum = Number(actionArray[1].action(0).item().meta.addActionTimes);
                 if (addActionNum && addActionNum > 0) {
@@ -306,6 +450,9 @@
                 this._callSrpgBattle = true;
                 this.eventBeforeBattle();
             } else {
+                //=================================================================================================
+                // MapBattle
+                //=================================================================================================
                 // prepare action timing
                 user.setActionTiming(0);
                 if (user != target) target.setActionTiming(1);
@@ -371,7 +518,9 @@
             }
         }
     };
+    //=================================================================================================
     //Kill units that were affected by AreaTargets
+    //=================================================================================================
     var _Scene_Map_srpgBattlerDeadAfterBattle = Scene_Map.prototype.srpgBattlerDeadAfterBattle;
     Scene_Map.prototype.srpgBattlerDeadAfterBattle = function () {
         _Scene_Map_srpgBattlerDeadAfterBattle.call(this);
@@ -396,7 +545,10 @@
             $gameTemp._aoeEffect = false;
         }
     };
-    // SRPG戦闘用のウィンドウを作る
+    //=================================================================================================
+    //SRPG Battle window 
+    //=================================================================================================
+/*
     Scene_Battle.prototype.createSprgBattleStatusWindow = function () {
         this._srpgBattleStatusWindowLeft = new Window_SrpgBattleStatus(0);
         this._srpgBattleStatusWindowRight = new Window_SrpgBattleStatus(1);
@@ -425,4 +577,5 @@
         this.addWindow(this._srpgBattleStatusWindowRight);
         BattleManager.setSrpgBattleStatusWindow(this._srpgBattleStatusWindowLeft, this._srpgBattleStatusWindowRight);
     };
+	*/
 })()
