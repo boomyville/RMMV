@@ -25,12 +25,15 @@
  * This plugin is plug and play. Works best with a character image that indicates which direction a unit will be facing
  * Best used with the SRPG_DirectionMod.js plugin which gives bonuses depending on unit direction
  *
+ * Place BEFORE Shoukang's MoveAfterAction for compatability with that script. Otherwise place near the top of your srpg plugins after srpg_core.js
+ *
  * Lunatic code is run only during actor phase and only if direction selection is enabled. 
  * Its main role is to display a message to the player to select a direction
  * No example is included as it would require an external plugin to look good (such as YEP Message Core Extension 2)
  *
  * Change Log
  * 8/11/20 - First Release
+*  5/8/21 - Update to enable compatability with Shoukang's MoveAfterAction
  */
 (function () {
     var substrBegin = document.currentScript.src.lastIndexOf('/');
@@ -420,22 +423,47 @@
     //Modified function to add the ability to change direction after standby command #Boomy
     Scene_Map.prototype.commandWait = function () {
         var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
-        actor.onAllActionsEnd();
-        if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isActor()) { //Direction Selection Lunatic Code 
-            eval(_directionSelectionLunaticCode);
-        }
-        //Change player icon to show direction unit is facing 
-        if (_directionSelection) {
-            $gamePlayer._x = $gameTemp.activeEvent().posX();
-            $gamePlayer._y = $gameTemp.activeEvent().posY();
-            if (_directionSelectionCharacterName !== -1) {
-                $gamePlayer._characterName = _directionSelectionCharacterName;
+        //Shoukang MoveAfterAction compatability
+        //If actor can still move, ignore direction selection
+        if (typeof actor.canMoveAfterAction !== "undefined") {
+            if (actor.canMoveAfterAction() && actor.SrpgRemainingMove() > 0 && !actor.isSrpgAfterActionMove() && !$gameTemp.isTurnEndFlag()) {
+                this.srpgAfterAction();
+            } else { //Set mode to direction selection
+                actor.onAllActionsEnd();
+                if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isActor()) { //Direction Selection Lunatic Code 
+                    eval(_directionSelectionLunaticCode);
+                }
+                //Change player icon to show direction unit is facing 
+                if (_directionSelection) {
+                    $gamePlayer._x = $gameTemp.activeEvent().posX();
+                    $gamePlayer._y = $gameTemp.activeEvent().posY();
+                    if (_directionSelectionCharacterName !== -1) {
+                        $gamePlayer._characterName = _directionSelectionCharacterName;
+                    }
+                }
+                $gameSystem.clearSrpgActorCommandWindowNeedRefresh(); //Remove command window
+                $gameSystem.clearSrpgActorCommandStatusWindowNeedRefresh(); //Remove quick status window 
+                $gameSystem.setSubBattlePhase('wait_direction_selection'); //Boomy edit to allow units to change direction if a unit goes into standby #Boomy
+                //this.srpgAfterAction(); 
             }
+        } else { //Set mode to direction selection
+            actor.onAllActionsEnd();
+            if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isActor()) { //Direction Selection Lunatic Code 
+                eval(_directionSelectionLunaticCode);
+            }
+            //Change player icon to show direction unit is facing 
+            if (_directionSelection) {
+                $gamePlayer._x = $gameTemp.activeEvent().posX();
+                $gamePlayer._y = $gameTemp.activeEvent().posY();
+                if (_directionSelectionCharacterName !== -1) {
+                    $gamePlayer._characterName = _directionSelectionCharacterName;
+                }
+            }
+            $gameSystem.clearSrpgActorCommandWindowNeedRefresh(); //Remove command window
+            $gameSystem.clearSrpgActorCommandStatusWindowNeedRefresh(); //Remove quick status window 
+            $gameSystem.setSubBattlePhase('wait_direction_selection'); //Boomy edit to allow units to change direction if a unit goes into standby #Boomy
+            //this.srpgAfterAction(); 
         }
-        $gameSystem.clearSrpgActorCommandWindowNeedRefresh(); //Remove command window
-        $gameSystem.clearSrpgActorCommandStatusWindowNeedRefresh(); //Remove quick status window 
-        $gameSystem.setSubBattlePhase('wait_direction_selection'); //Boomy edit to allow units to change direction if a unit goes into standby #Boomy
-        //this.srpgAfterAction(); 
     };
     //戦闘終了の処理（共通）
     var _SRPG_BattleManager_endBattle = BattleManager.endBattle;
@@ -445,7 +473,14 @@
             this._srpgBattleResultWindow.close();
         }
         this.replayBgmAndBgs();
-        $gameSystem.setSubBattlePhase('pre_direction_selection');
+        //MoveAfterAction compatability
+        if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1] !== undefined && $gameSystem._isBattlePhase == "actor_phase") {
+            if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].srpgTurnEnd() && !$gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isSrpgAfterActionMove() && $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].SrpgRemainingMove() && !$gameTemp.isTurnEndFlag()) {
+                this.srpgAfterAction();
+            }
+        } else {
+            $gameSystem.setSubBattlePhase('pre_direction_selection');
+        }
     };
     //戦闘終了処理のアップデート
     var __SRPG_BattleManager_updateBattleEnd = BattleManager.updateBattleEnd;
