@@ -14,4 +14,5 @@ If you used Yanfly enemy level plugin, then replace enemy.enemy().meta.srpgLevel
 ### Current issues
 
 If a skill is used and it targets multiple enemies, exp is calculated for all targets which means exp gain will end up being very high
+
 If an attack fails, exp is still gained
