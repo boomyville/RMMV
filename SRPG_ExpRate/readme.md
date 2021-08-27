@@ -10,3 +10,8 @@ enemy.enemy().meta.srpgLevel / actor.level * enemy.exp()
 
 If the actor level is 3 and the enemy level is 4 and the enemy exp rate is 10 (set in the database), then exp gained will be 13.3333
 If you used Yanfly enemy level plugin, then replace enemy.enemy().meta.srpgLevel with enemy.level 
+
+### Current issues
+
+If a skill is used and it targets multiple enemies, exp is calculated for all targets which means exp gain will end up being very high
+If an attack fails, exp is still gained
