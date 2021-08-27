@@ -1,4 +1,4 @@
-#SRPG Buff and States Core - SRPG Extension
+# SRPG Buff and States Core - SRPG Extension
 
 A very simple plug and play plugin that extends Yanfly's Buff and States Core to be used with SRPG_core.js
 Adds the two notetags to states: <Custom SRPG Phase Start Effect> <Custom SRPG Phase End Effect>
