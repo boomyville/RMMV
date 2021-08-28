@@ -56,7 +56,7 @@
                             var level = Number($gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].level !== undefined ? $gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].level : $gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].enemy().meta.srpgLevel);
                             levelArray.push(level);
                         }
-                        var average = levelArray = > levelArray.reduce((p, c) = > p + c, 0) / levelArray.length;
+                        var average = levelArray => levelArray.reduce((p, c) => p + c, 0) / levelArray.length;
                         var targetsAverageLevel = average(levelArray);
                         var targetsMaxLevel = Math.max(...levelArray);
                         var targetsMinLevel = Math.min(...levelArray);
@@ -76,7 +76,7 @@
                         var level = Number($gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].level !== undefined ? $gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].level : $gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].enemy().meta.srpgLevel);
                         levelArray.push(level);
                     }
-                    var average = levelArray = > levelArray.reduce((p, c) = > p + c, 0) / levelArray.length;
+                    var average = levelArray => levelArray.reduce((p, c) => p + c, 0) / levelArray.length;
                     var targetsAverageLevel = average(levelArray);
                     var targetsMaxLevel = Math.max(...levelArray);
                     var targetsMinLevel = Math.min(...levelArray);
