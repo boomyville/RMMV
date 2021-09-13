@@ -6,7 +6,7 @@ and have a condition (enemy.name() == "Shoukang") and it can make the tile under
 enemy flash a different colour. 
 
 In the example below, one enemy is weak to "stab" and the other is "strong" (as shown by damage change)
-![](https://github.com/boomyville/RMMV/blob/master/SRPG_Zone_Customisation/Example.gif)
+![](https://github.com/boomyville/RMMV/blob/master/SRPG%20Zone%20Customisation/Example.gif?raw=true)
 
 ## Requirements
 SRPG AOE.js
