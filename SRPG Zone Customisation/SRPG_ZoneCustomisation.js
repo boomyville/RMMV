@@ -62,9 +62,9 @@
         this._posY = y;
         if (attackFlag == true) {
             if ($gameSystem.isSubBattlePhase() == "actor_target") {
+				drawColour = "red";
                 if ($gameMap.eventsXy(x, y).length > 0) {
                     for (var i = 0; i < $gameMap.eventsXy(x, y).length; i++) {
-                        console.log($gameMap.eventsXy(x, y)[i].eventId());
                         if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId()) !== undefined) {
                             if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1].isEnemy()) {
                                 var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
