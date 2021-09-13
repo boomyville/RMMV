@@ -62,7 +62,6 @@
         this._posY = y;
         if (attackFlag == true) {
             if ($gameSystem.isSubBattlePhase() == "actor_target") {
-                var drawColour = "red";
                 if ($gameMap.eventsXy(x, y).length > 0) {
                     for (var i = 0; i < $gameMap.eventsXy(x, y).length; i++) {
                         console.log($gameMap.eventsXy(x, y)[i].eventId());
@@ -72,11 +71,9 @@
                                 var enemy = $gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1];
                                 if (eval(parameters["Condition 1"])) {
                                     drawColour = parameters["Result 1"];
-									console.log(drawColour);
                                     break;
                                 } else if (eval(parameters["Condition 2"])) {
                                     drawColour = parameters["Result 2"];
-                                    console.log(drawColour);
 									break;
                                 }
                                 }
