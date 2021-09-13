@@ -5,6 +5,8 @@ This script uses javascript eval so a lot can be done with it. You could make a 
 and have a condition (enemy.name() == "Shoukang") and it can make the tile under the secret
 enemy flash a different colour. 
 
+In the example below, one enemy is weak to "stab" and the other is "strong" (as shown by damage change)
+
 ## Requirements
 SRPG AOE.js
 
