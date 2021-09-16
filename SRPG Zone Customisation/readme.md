@@ -15,3 +15,5 @@ SRPG AOE.js
 Only shows zones if the target is within srpgRange zone, so if you have an AoE skill and the AoE
 skill extends past the srpgRange, those units outside the range won't be highlighted properly UNLESS
 they are being highlighted by an active AOE range
+
+![](https://github.com/boomyville/RMMV/blob/master/SRPG%20Zone%20Customisation/Example2.gif?raw=true)
