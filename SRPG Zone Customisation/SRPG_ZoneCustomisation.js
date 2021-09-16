@@ -7,22 +7,24 @@
  * 
  * @param Condition 1
  * @desc A javascript eval. Can use "actor" and "enemy" variables
- * @default (Imported.YEP_ElementCore) ? (actor.currentAction().calcElementRate(enemy) > 1) : (enemy.elementRate(actor.currentAction.item().damage.elementId) > 1)
+ * @default (Imported.YEP_ElementCore) ? (actor.currentAction().calcElementRate(enemy) > 1) : (enemy.elementRate(actor.currentAction().item().damage.elementId) > 1)
  * 
  * @param Result 1
  * @desc A colour. 
- * @default DarkRed
+ * @default Cyan
  *   
  * @param Condition 2
  * @desc A javascript eval. Can use "actor" and "enemy" variables
- * @default (Imported.YEP_ElementCore) ? (actor.currentAction().calcElementRate(enemy) < 1) : (enemy.elementRate(actor.currentAction.item().damage.elementId) < 1)
+ * @default (Imported.YEP_ElementCore) ? (actor.currentAction().calcElementRate(enemy) < 1) : (enemy.elementRate(actor.currentAction().item().damage.elementId) < 1)
  * 
  * @param Result 2
  * @desc A colour. 
- * @default Gray
+ * @default Green
  *   
  * @help
  * This plugin was made at the request of MetalKing11417 of the RPG Maker Forums 
+ *
+ * Place below all SRPG plugins for maximum compatability
  *
  * This is an advanced plugin that changes the colour of tiles when an enemy is
  *  "in the zone" (within the target range of a skill)
@@ -62,30 +64,32 @@
         this._posY = y;
         if (attackFlag == true) {
             if ($gameSystem.isSubBattlePhase() == "actor_target") {
-				drawColour = "red";
+                drawColour = "red";
                 if ($gameMap.eventsXy(x, y).length > 0) {
                     for (var i = 0; i < $gameMap.eventsXy(x, y).length; i++) {
                         if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId()) !== undefined) {
-                            if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1].isEnemy()) {
-                                var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
-                                var enemy = $gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1];
-                                if (eval(parameters["Condition 1"])) {
-                                    drawColour = parameters["Result 1"];
-                                    break;
-                                } else if (eval(parameters["Condition 2"])) {
-                                    drawColour = parameters["Result 2"];
-									break;
-                                }
-                                }
+                            if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())) {
+                                if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1].isEnemy()) {
+                                    var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
+                                    var enemy = $gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1];
+                                    if (eval(parameters["Condition 1"])) {
+                                        drawColour = parameters["Result 1"];
+                                        break;
+                                    } else if (eval(parameters["Condition 2"])) {
+                                        drawColour = parameters["Result 2"];
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    this.bitmap.fillAll(drawColour);
-                } else {
-                    this.bitmap.fillAll("red");
+                    }
                 }
+                this.bitmap.fillAll(drawColour);
             } else {
-                this.bitmap.fillAll('blue');
+                this.bitmap.fillAll("red");
             }
-        };
-    })()
+        } else {
+            this.bitmap.fillAll('blue');
+        }
+    };
+})()
