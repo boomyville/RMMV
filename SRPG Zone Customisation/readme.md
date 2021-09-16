@@ -12,4 +12,5 @@ In the example below, one enemy is weak (green) to "stab" and the other is "stro
 SRPG AOE.js
 
 ## Limitations
-Doesn't work properly with srpg_core.js specialRange (such as rook)
+Only shows zones if the target is within srpgRange zone, so if you have an AoE skill and the AoE
+skill extends past the srpgRange, those units outside the range won't be highlighted properly
