@@ -69,15 +69,17 @@
                     for (var i = 0; i < $gameMap.eventsXy(x, y).length; i++) {
                         if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId()) !== undefined) {
                             if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())) {
-                                if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1].isEnemy()) {
-                                    var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
-                                    var enemy = $gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1];
-                                    if (eval(parameters["Condition 1"])) {
-                                        drawColour = parameters["Result 1"];
-                                        break;
-                                    } else if (eval(parameters["Condition 2"])) {
-                                        drawColour = parameters["Result 2"];
-                                        break;
+                                if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1]) {
+                                    if ($gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1].isEnemy()) {
+                                        var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
+                                        var enemy = $gameSystem.EventToUnit($gameMap.eventsXy(x, y)[i].eventId())[1];
+                                        if (eval(parameters["Condition 1"])) {
+                                            drawColour = parameters["Result 1"];
+                                            break;
+                                        } else if (eval(parameters["Condition 2"])) {
+                                            drawColour = parameters["Result 2"];
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -92,43 +94,39 @@
             this.bitmap.fillAll('blue');
         }
     };
-	
-	
-	Sprite_SrpgAoE.prototype.drawCell = function(bitmap, x, y, tileWidth, tileHeight) {
-		var tileX = x / tileWidth;
-		var tileY = y / tileHeight;
-		if($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange !== undefined) {
-		tileX = tileX - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posX();
-		tileY = tileY - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posY();
-	}
-		var drawColour = PluginManager.parameters("SRPG_AoE")["AoE Color"];
-		if ($gameSystem.isSubBattlePhase() == "actor_target") {
-                if ($gameMap.eventsXy(tileX, tileY).length > 0) {
-                    for (var i = 0; i < $gameMap.eventsXy(tileX, tileY).length; i++) {
-                        if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId()) !== undefined) {
-                            if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())) {
-                                if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())[1].isEnemy()) {
-                                    var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
-                                    var enemy = $gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())[1];
-                                    if (eval(parameters["Condition 1"])) {
-                                        drawColour = parameters["Result 1"];
-                                        break;
-                                    } else if (eval(parameters["Condition 2"])) {
-                                        drawColour = parameters["Result 2"];
-                                        break;
-                                    }
+    Sprite_SrpgAoE.prototype.drawCell = function (bitmap, x, y, tileWidth, tileHeight) {
+        if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction() !== undefined) {
+            if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange !== undefined) {
+                var tileX = x / tileWidth;
+                var tileY = y / tileHeight;
+                tileX = tileX - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posX();
+                tileY = tileY - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posY();
+            }
+        }
+        var drawColour = PluginManager.parameters("SRPG_AoE")["AoE Color"];
+        if ($gameSystem.isSubBattlePhase() == "actor_target") {
+            if ($gameMap.eventsXy(tileX, tileY).length > 0) {
+                for (var i = 0; i < $gameMap.eventsXy(tileX, tileY).length; i++) {
+                    if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId()) !== undefined) {
+                        if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())) {
+                            if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())[1].isEnemy()) {
+                                var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
+                                var enemy = $gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())[1];
+                                if (eval(parameters["Condition 1"])) {
+                                    drawColour = parameters["Result 1"];
+                                    break;
+                                } else if (eval(parameters["Condition 2"])) {
+                                    drawColour = parameters["Result 2"];
+                                    break;
                                 }
                             }
                         }
                     }
                 }
-                 bitmap.fillRect(x, y, tileWidth, tileHeight, drawColour);
-            } else {
-                bitmap.fillRect(x, y, tileWidth, tileHeight, drawColour);
             }
-		
-
-	};
-	
-	
+            bitmap.fillRect(x, y, tileWidth, tileHeight, drawColour);
+        } else {
+            bitmap.fillRect(x, y, tileWidth, tileHeight, drawColour);
+        }
+    };
 })()
