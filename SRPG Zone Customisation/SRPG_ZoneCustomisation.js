@@ -109,15 +109,17 @@
                 for (var i = 0; i < $gameMap.eventsXy(tileX, tileY).length; i++) {
                     if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId()) !== undefined) {
                         if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())) {
-                            if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())[1].isEnemy()) {
-                                var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
-                                var enemy = $gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())[1];
-                                if (eval(parameters["Condition 1"])) {
-                                    drawColour = parameters["Result 1"];
-                                    break;
-                                } else if (eval(parameters["Condition 2"])) {
-                                    drawColour = parameters["Result 2"];
-                                    break;
+                            if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())[1]) {
+                                if ($gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())[1].isEnemy()) {
+                                    var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
+                                    var enemy = $gameSystem.EventToUnit($gameMap.eventsXy(tileX, tileY)[i].eventId())[1];
+                                    if (eval(parameters["Condition 1"])) {
+                                        drawColour = parameters["Result 1"];
+                                        break;
+                                    } else if (eval(parameters["Condition 2"])) {
+                                        drawColour = parameters["Result 2"];
+                                        break;
+                                    }
                                 }
                             }
                         }
