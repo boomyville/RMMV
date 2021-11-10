@@ -20,9 +20,66 @@
  * @param Result 2
  * @desc A colour. 
  * @default Green
+  *   
+ * @param Condition 3
+ * @desc A javascript eval. Can use "actor" and "enemy" variables
+ * @default false
+ * 
+ * @param Result 3
+ * @desc A colour. 
+ * @default Red
+  *   
+ * @param Condition 4
+ * @desc A javascript eval. Can use "actor" and "enemy" variables
+ * @default false
+ * 
+ * @param Result 4
+ * @desc A colour. 
+ * @default DarkViolet
+  *   
+ * @param Condition 5
+ * @desc A javascript eval. Can use "actor" and "enemy" variables
+ * @default false
+ * 
+ * @param Result 5
+ * @desc A colour. 
+ * @default White
+  *   
+ * @param Condition 6
+ * @desc A javascript eval. Can use "actor" and "enemy" variables
+ * @default false
+ * 
+ * @param Result 6
+ * @desc A colour. 
+ * @default Black
+  *   
+ * @param Condition 7
+ * @desc A javascript eval. Can use "actor" and "enemy" variables
+ * @default false
+ * 
+ * @param Result 7
+ * @desc A colour. 
+ * @default Blue
+  *   
+ * @param Condition 8
+ * @desc A javascript eval. Can use "actor" and "enemy" variables
+ * @default false
+ * 
+ * @param Result 8
+ * @desc A colour. 
+ * @default Pink
+  *   
+ * @param Condition 9
+ * @desc A javascript eval. Can use "actor" and "enemy" variables
+ * @default false
+ * 
+ * @param Result 9
+ * @desc A colour. 
+ * @default Aquamarine
  *   
  * @help
  * This plugin was made at the request of MetalKing11417 of the RPG Maker Forums 
+ * This plugin was further edited in response to Yew Bowman of the RPG Maker Forums 
  *
  * Place below all SRPG plugins for maximum compatability
  *
@@ -79,6 +136,30 @@
                                         } else if (eval(parameters["Condition 2"])) {
                                             drawColour = parameters["Result 2"];
                                             break;
+                                        } else if (eval(parameters["Condition 3"])) {
+                                            drawColour = parameters["Result 3"];
+                                            break;
+                                        } else if (eval(parameters["Condition 4"])) {
+                                            drawColour = parameters["Result 4"];
+                                            break;
+                                        } else if (eval(parameters["Condition 5"])) {
+                                            drawColour = parameters["Result 5"];
+                                            break;
+                                        } else if (eval(parameters["Condition 5"])) {
+                                            drawColour = parameters["Result 5"];
+                                            break;
+                                        } else if (eval(parameters["Condition 6"])) {
+                                            drawColour = parameters["Result 6"];
+                                            break;
+                                        } else if (eval(parameters["Condition 7"])) {
+                                            drawColour = parameters["Result 7"];
+                                            break;
+                                        } else if (eval(parameters["Condition 8"])) {
+                                            drawColour = parameters["Result 8"];
+                                            break;
+                                        } else if (eval(parameters["Condition 9"])) {
+                                            drawColour = parameters["Result 9"];
+                                            break;
                                         }
                                     }
                                 }
@@ -118,6 +199,27 @@
                                         break;
                                     } else if (eval(parameters["Condition 2"])) {
                                         drawColour = parameters["Result 2"];
+                                        break;
+                                    }else if (eval(parameters["Condition 3"])) {
+                                        drawColour = parameters["Result 3"];
+                                        break;
+                                    }else if (eval(parameters["Condition 4"])) {
+                                        drawColour = parameters["Result 4"];
+                                        break;
+                                    }else if (eval(parameters["Condition 5"])) {
+                                        drawColour = parameters["Result 5"];
+                                        break;
+                                    }else if (eval(parameters["Condition 6"])) {
+                                        drawColour = parameters["Result 6"];
+                                        break;
+                                    }else if (eval(parameters["Condition 7"])) {
+                                        drawColour = parameters["Result 7"];
+                                        break;
+                                    }else if (eval(parameters["Condition 8"])) {
+                                        drawColour = parameters["Result 8"];
+                                        break;
+                                    }else if (eval(parameters["Condition 9"])) {
+                                        drawColour = parameters["Result 9"];
                                         break;
                                     }
                                 }
