@@ -176,12 +176,14 @@
         }
     };
     Sprite_SrpgAoE.prototype.drawCell = function (bitmap, x, y, tileWidth, tileHeight) {
-        if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction() !== undefined) {
-            if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange !== undefined) {
-                var tileX = x / tileWidth;
-                var tileY = y / tileHeight;
-                tileX = tileX - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posX();
-                tileY = tileY - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posY();
+        if ($gameTemp.activeEvent()) {
+            if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction() !== undefined) {
+                if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange !== undefined) {
+                    var tileX = x / tileWidth;
+                    var tileY = y / tileHeight;
+                    tileX = tileX - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posX();
+                    tileY = tileY - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posY();
+                }
             }
         }
         var drawColour = PluginManager.parameters("SRPG_AoE")["AoE Color"];
@@ -200,25 +202,25 @@
                                     } else if (eval(parameters["Condition 2"])) {
                                         drawColour = parameters["Result 2"];
                                         break;
-                                    }else if (eval(parameters["Condition 3"])) {
+                                    } else if (eval(parameters["Condition 3"])) {
                                         drawColour = parameters["Result 3"];
                                         break;
-                                    }else if (eval(parameters["Condition 4"])) {
+                                    } else if (eval(parameters["Condition 4"])) {
                                         drawColour = parameters["Result 4"];
                                         break;
-                                    }else if (eval(parameters["Condition 5"])) {
+                                    } else if (eval(parameters["Condition 5"])) {
                                         drawColour = parameters["Result 5"];
                                         break;
-                                    }else if (eval(parameters["Condition 6"])) {
+                                    } else if (eval(parameters["Condition 6"])) {
                                         drawColour = parameters["Result 6"];
                                         break;
-                                    }else if (eval(parameters["Condition 7"])) {
+                                    } else if (eval(parameters["Condition 7"])) {
                                         drawColour = parameters["Result 7"];
                                         break;
-                                    }else if (eval(parameters["Condition 8"])) {
+                                    } else if (eval(parameters["Condition 8"])) {
                                         drawColour = parameters["Result 8"];
                                         break;
-                                    }else if (eval(parameters["Condition 9"])) {
+                                    } else if (eval(parameters["Condition 9"])) {
                                         drawColour = parameters["Result 9"];
                                         break;
                                     }
