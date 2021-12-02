@@ -1,12 +1,7 @@
-#Useful parameters#
-Detailed below is a list of javascript code parameters that can be used to help construct your windows
-
-Some parameters also include a 'console' value that allows you to determine the default/current value in your project by entering it in the console
-
-To open the console, press F12 
-
-I have also ranked parameters based on my subjective opinion on usefulness (bold = important)
-##Window properties##
+# Useful parameters
+Detailed below is a list of javascript code parameters that can be used to help construct your windows. Some parameters also include a 'console' value that allows you to determine the default/current value in your project by entering it in the console.
+To open the console, press F12. I have also ranked parameters based on my subjective opinion on usefulness (bold = important)
+## Window properties
 - **Window Padding**: this.padding 
 	- This is the space within a window that is set as a margin
 	- More less padding = contents drawn closer to the edge of the window
