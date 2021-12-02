@@ -86,6 +86,7 @@ Replace actor with one of the following:
 - this._activeArray[1] (Prediction window Only)
 - this._targetArray[1] (Prediction window Only)
 
+Parameters:
 - HP: actor.hp (MaxHP: actor.mhp)
 - MP: actor.mp (MaxMp: actor.mmp)
 - TP: actor.tp
