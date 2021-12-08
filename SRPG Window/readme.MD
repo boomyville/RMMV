@@ -119,9 +119,11 @@ The Fire Emblem games on GBA have a very simple window that pops up when a unit 
 
 
 Fire Emblem (GBA):
+
 ![Fire Emblem Example](https://gamefaqs.gamespot.com/a/screen/full/9/1/6/242916.jpg)
 
 SRPG_Core.js:
+
 ![SRPG Example](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/Example1.png?raw=true)
 
 
