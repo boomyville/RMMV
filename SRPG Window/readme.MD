@@ -175,7 +175,6 @@ The contents parameter is basically javascript (lunatic) code that will fill our
 - Use the following code to test your code in the game on the fly using the console:
 	PluginManager.parameters("SRPG_Window")["Prediction Window Contents Lunatic Code"] = "if (this._battler.isActor()) { this.drawActorFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight); } else { this.drawEnemyFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight); } 	this.drawText(this._battler.name(), Window_Base._faceWidth + this.padding, 0, Window_Base._faceWidth, 'right'); 	 this.drawText(this._battler.hp + '/' + this._battler.mhp, Window_Base._faceWidth + this.padding, this.windowHeight() / 3, Window_Base._faceWidth, 'right'); 	 this.drawGauge(Window_Base._faceWidth + this.padding, this.windowHeight()  / 3 * 2, Window_Base._faceWidth, this._battler.hpRate(), '#FF0000', '#00FF00');"
 
- 
-	
+![Fire Emblem Example](https://gamefaqs.gamespot.com/a/screen/full/9/1/2/242912.jpg)
 
 
