@@ -135,6 +135,8 @@ Firstly we need to create the background for our window. In this tutorial, we wi
 - Width: Window_Base._faceWidth * 2 + Window_Base.prototype.standardPadding() * 3
 - Height: Window_Base._faceHeight * 1 + Window_Base.prototype.standardPadding() * 2
 
+![Plugin Parameters](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/PluginParameters1.png?raw=true)
+
 The contents parameter is basically javascript (lunatic) code that will fill our window. In this case, we will have the face of the unit placed on the left side of the window and the unit's name / HP / HP gauge on the right side of the window
 - To place a face, we use the this.drawActorFace(actor, x, y, width, height) function (for actor) or drawEnemyFace for enemies. 
 	- Actor will be this._battler 
