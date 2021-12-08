@@ -116,7 +116,15 @@ Parameters:
 
 ## Fire Emblem (GBA) Style Quick Status Tutorial
 The Fire Emblem games on GBA have a very simple window that pops up when a unit is highlighted. The window is usually shown on the bottom corner and includes the unit's face, name, HP and HP gauge. This is fairly easy to replicate with SRPG_Window.js.
-![Example](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/Example1.png?raw=true)
+
+
+Fire Emblem (GBA):
+![Fire Emblem Example](https://gamefaqs.gamespot.com/a/screen/full/9/1/6/242916.jpg)
+
+SRPG_Core.js:
+![SRPG Example](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/Example1.png?raw=true)
+
+
 Firstly we need to create the background for our window. In this tutorial, we will use the default window skin but it is possible to use a background image instead. We will set the window to have a height of 1 face_height + padding * 2 and width of 2 face_widths + padding * 2. This will mean we need to use the following plugin parameters (Quick Status):
 - No hover (false)
 - Quick Status X: Graphics.boxWidth - Window_Base._faceWidth * 2 - Window_Base.prototype.standardPadding() * 3
