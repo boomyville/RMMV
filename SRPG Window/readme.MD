@@ -7,7 +7,7 @@ To open the console, press F12. I have also ranked parameters based on my subjec
 	- More less padding = contents drawn closer to the edge of the window
 	- Modifiable by YEP_Core
 	- console: SceneManager._scene._windowLayer.children[0].padding
-- Text Padding: this.textPadding()
+- Text Padding: this.textPadding() or Window_Base.prototype.standardPadding()
 	- This is the space between text elements
 	- More less padding = text elements drawn closer together
 	- Modifiable by YEP_Core
@@ -116,14 +116,14 @@ Parameters:
 
 ## Fire Emblem (GBA) Style Quick Status Tutorial
 The Fire Emblem games on GBA have a very simple window that pops up when a unit is highlighted. The window is usually shown on the bottom corner and includes the unit's face, name, HP and HP gauge. This is fairly easy to replicate with SRPG_Window.js.
-
+![Example](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/Example1.png?raw=true)
 Firstly we need to create the background for our window. In this tutorial, we will use the default window skin but it is possible to use a background image instead. We will set the window to have a height of 1 face_height + padding * 2 and width of 2 face_widths + padding * 2. This will mean we need to use the following plugin parameters (Quick Status):
 - No hover (false)
-- Quick Status X: Graphics.boxWidth - Window_Base._faceWidth * 2 - this.padding * 2
-- Quick Status Y: Graphics.boxHeight - Window_Base._faceHeight * 1 - this.padding * 2
+- Quick Status X: Graphics.boxWidth - Window_Base._faceWidth * 2 - Window_Base.prototype.standardPadding() * 3
+- Quick Status Y: Graphics.boxHeight - Window_Base._faceHeight * 1 - Window_Base.prototype.standardPadding() * 2
 - Opacity: 128 (Half transparent)
-- Width: Window_Base._faceWidth * 2 + this.padding * 3
-- Height: Window_Base._faceHeight * 1 + this.padding * 2
+- Width: Window_Base._faceWidth * 2 + Window_Base.prototype.standardPadding() * 3
+- Height: Window_Base._faceHeight * 1 + Window_Base.prototype.standardPadding() * 2
 
 The contents parameter is basically javascript (lunatic) code that will fill our window. In this case, we will have the face of the unit placed on the left side of the window and the unit's name / HP / HP gauge on the right side of the window
 - To place a face, we use the this.drawActorFace(actor, x, y, width, height) function (for actor) or drawEnemyFace for enemies. 
@@ -133,10 +133,10 @@ The contents parameter is basically javascript (lunatic) code that will fill our
 	- width will be the default face width (Window_Base._faceWidth)
 	- height will be the default face width (Window_Base._faceHeight)
 	- We will do a check to see if we should call the drawActorFace or drawEnemyFace function by using the isActor() function
-	- this._battler.isActor() ? this.drawActorFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight) : this.drawEnemyFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight) 
+	- if (this._battler.isActor()) { this.drawActorFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight); } else { this.drawEnemyFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight); }
 - To place the unit's name, we will use a simple this.drawText function
 	- text will be this._battler.name()
-	- x will be Window_Base._faceWidth + this.padding (to the right side of the face graphic)
+	- x will be Window_Base._faceWidth + Window_Base.prototype.standardPadding() (to the right side of the face graphic)
 	- y will be 0 (top of window)
 	- width will be a face width of Window_Base._faceWidth
 	- this.drawText(this._battler.name(), Window_Base._faceWidth + this.padding, 0, Window_Base._faceWidth)
@@ -148,21 +148,20 @@ The contents parameter is basically javascript (lunatic) code that will fill our
 	- this.drawText(this._battler.hp + "/" + this._battler.mhp, Window_Base._faceWidth + this.padding, this.windowHeight() / 3, Window_Base._faceWidth)
 - To draw the HP Gauge, we will use a drawGauge function	
 	- x will be Window_Base._faceWidth + this.padding (to the right side of the face graphic)
-	- y will be 1/2 down of the status window this.windowHeight() / 2
+	- y will be 2/3 down of the status window this.windowHeight() / 3 * 2
 	- width will be a face width of Window_Base._faceWidth
 	- rate will be a float value between 0 and 1 representing "% health left". RMMV gives us the this._battler.hpRate() function
 	- colour1 will be a hexadecimal colour of red (#ff0000)
 	- colour2 will be a hexadecimal colour of green (#00ff00)
-	- this.drawGauge( Window_Base._faceWidth + this.padding, this.windowHeight() / 2, Window_Base._faceWidth, this._battler.hpRate(), '#ff0000', '#00ff00')
+	- this.drawGauge( Window_Base._faceWidth + this.padding, this.windowHeight() / 3 * 2, Window_Base._faceWidth, this._battler.hpRate(), '#ff0000', '#00ff00')
 - We combine all these functions into one line (separate each line with semi-colon) to get: 
-	this._battler.isActor() ? this.drawActorFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight) : this.drawEnemyFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight);
-	this.drawText(this._battler.name(), Window_Base._faceWidth + this.padding, 0, Window_Base._faceWidth);
-	this.drawText(this._battler.hp + "/" + this._battler.mhp, Window_Base._faceWidth + this.padding, this.windowHeight() / 3, Window_Base._faceWidth);
-	this.drawGauge( Window_Base._faceWidth + this.padding, this.windowHeight() / 2, Window_Base._faceWidth, this._battler.hpRate(), '#ff0000', '#00ff00');
+	if (this._battler.isActor()) { this.drawActorFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight); } else { this.drawEnemyFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight); } 	this.drawText(this._battler.name(), Window_Base._faceWidth + this.padding, 0, Window_Base._faceWidth, 'right'); 	
+	this.drawText(this._battler.hp + '/' + this._battler.mhp, Window_Base._faceWidth + this.padding, this.windowHeight() / 3, Window_Base._faceWidth, 'right'); 	
+	this.drawGauge(Window_Base._faceWidth + this.padding, this.windowHeight()  / 3 * 2, Window_Base._faceWidth, this._battler.hpRate(), '#FF0000', '#00FF00');
 - I use notepad++ as well as ctrl + J to remove all line breaks.
 - If you want to align the HP and battler name text to the right, you can add 'right' as a final parameter to the drawText function 
 - Use the following code to test your code in the game on the fly using the console:
-	PluginManager.parameters("SRPG_Window")["Prediction Window Contents Lunatic Code"] = "this._battler.isActor() ? this.drawActorFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight) : this.drawEnemyFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight); 	this.drawText(this._battler.name(), Window_Base._faceWidth + this.padding, 0, Window_Base._faceWidth, 'right'); 	this.drawText(this._battler.hp + '/' + this._battler.mhp, Window_Base._faceWidth + this.padding, this.windowHeight() / 3, Window_Base._faceWidth, 'right'); 	this.drawGauge( Window_Base._faceWidth + this.padding, this.windowHeight() / 2, Window_Base._faceWidth, this._battler.hpRate(), '#FF0000', '#00FF00');"
+	PluginManager.parameters("SRPG_Window")["Prediction Window Contents Lunatic Code"] = "if (this._battler.isActor()) { this.drawActorFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight); } else { this.drawEnemyFace(this._battler, 0, 0, Window_Base._faceWidth, Window_Base._faceHeight); } 	this.drawText(this._battler.name(), Window_Base._faceWidth + this.padding, 0, Window_Base._faceWidth, 'right'); 	 this.drawText(this._battler.hp + '/' + this._battler.mhp, Window_Base._faceWidth + this.padding, this.windowHeight() / 3, Window_Base._faceWidth, 'right'); 	 this.drawGauge(Window_Base._faceWidth + this.padding, this.windowHeight()  / 3 * 2, Window_Base._faceWidth, this._battler.hpRate(), '#FF0000', '#00FF00');"
 
  
 	
