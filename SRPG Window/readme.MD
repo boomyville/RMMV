@@ -3,6 +3,16 @@
 
 Change how the quick status (window that shows when a unit is highlighted) and prediction window (window that shows when the player chooses a target for an action) is shown. It requires heavy javascript knowledge as most of the customisation is executed using javascript. Out of the box it slightly edits the prediction and quick status menus to an 'alternative' version. A tutorial is provided below for those that want to delve deeper.
 
+# Useful tips
+- Use the console to run code on the fly by changing plugin parameters:
+	- PluginManager.parameters("SRPGWindow")["Quick Status Contents Lunatic Code"] = "newCode";
+	- PluginManager.parameters("SRPGWindow")["Prediction Window Contents Lunatic Code"] = "newCode";
+	- You can also alter X / Y / Width / Height parameters
+- The console can also give you plenty of data to use in your windows
+	- If you type $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1] in the console window when an unit is active, it will spit out all of the units parameters such as ._name or ._sparam or ._skills (array).
+	- Taking this example further, if we scroll to the bottom of the output, you will find that $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1] is a member of the Game_Battler class. The Game_Battler class (upon clicking) will show a whole bunch of functions we can use such as srpgMove() or weapons()
+	- If we want to show if a unit is "immovable" we could draw an icon if the user.srpgImmovable() == true (this property belongs to SRPG_PositionEffects.js)
+	
 # Useful parameters
 Detailed below is a list of javascript code parameters that can be used to help construct your windows. Some parameters also include a 'console' value that allows you to determine the default/current value in your project by entering it in the console.
 To open the console, press F12. I have also ranked parameters based on my subjective opinion on usefulness (bold = important)
