@@ -1,5 +1,6 @@
 # What does this do?
 ![Example](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/Example4.gif?raw=true)
+
 Change how the quick status (window that shows when a unit is highlighted) and prediction window (window that shows when the player chooses a target for an action) is shown. It requires heavy javascript knowledge as most of the customisation is executed using javascript. Out of the box it slightly edits the prediction and quick status menus to an 'alternative' version. A tutorial is provided below for those that want to delve deeper.
 
 # Useful parameters
