@@ -186,113 +186,113 @@ SRPG_Core.js:
 ![Example](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/Example2.png?raw=true)
 
 Firstly we need to create the background for our window. In this tutorial, we will use the default window skin but it is possible to use a background image instead. We will set the window to have a height of 8 lines as we will display 8 rows of text. We will add 2 padding as well to the height of the window. The confirm window will go below the prediction window. The width will be set at 2 faceWidth + padding * 2 though this is arbitrary. The window will be placed in the middle of the screen. This will mean we need to use the following plugin parameters (Prediction Window):
-	- No hover (false)
-	- Prediction Window X: Graphics.boxWidth / 2 - ( Window_Base._faceWidth * 2 + Window_Base.prototype.standardPadding() * 2) / 2
-	- Prediction Window Y: Graphics.boxHeight / 2 - (Window_Base.prototype.lineHeight() * 8 + Window_Base.prototype.standardPadding() * 6) / 2
-	- Opacity: 128 (Half transparent)
-	- Prediction Window Width: Window_Base._faceWidth * 2 + Window_Base.prototype.standardPadding() * 2
-	- Prediction Window Height: Window_Base.prototype.lineHeight() * 8 + Window_Base.prototype.standardPadding() * 6
-	- Confirm Window X: Graphics.boxWidth / 2 - ( Window_Base._faceWidth * 2 + Window_Base.prototype.standardPadding() * 2) / 2
-	- Confirm Window Y: Graphics.boxHeight / 2 + (Window_Base.prototype.lineHeight() * 8 + Window_Base.prototype.standardPadding() * 6) / 2
-	- Confirm Window Width: Window_Base._faceWidth * 2+ Window_Base.prototype.standardPadding() * 2
-	- Confirm Window Rows: 2
-	
+- No hover (false)
+- Prediction Window X: Graphics.boxWidth / 2 - ( Window_Base._faceWidth * 2 + Window_Base.prototype.standardPadding() * 2) / 2
+- Prediction Window Y: Graphics.boxHeight / 2 - (Window_Base.prototype.lineHeight() * 8 + Window_Base.prototype.standardPadding() * 6) / 2
+- Opacity: 128 (Half transparent)
+- Prediction Window Width: Window_Base._faceWidth * 2 + Window_Base.prototype.standardPadding() * 2
+- Prediction Window Height: Window_Base.prototype.lineHeight() * 8 + Window_Base.prototype.standardPadding() * 6
+- Confirm Window X: Graphics.boxWidth / 2 - ( Window_Base._faceWidth * 2 + Window_Base.prototype.standardPadding() * 2) / 2
+- Confirm Window Y: Graphics.boxHeight / 2 + (Window_Base.prototype.lineHeight() * 8 + Window_Base.prototype.standardPadding() * 6) / 2
+- Confirm Window Width: Window_Base._faceWidth * 2+ Window_Base.prototype.standardPadding() * 2
+- Confirm Window Rows: 2
+
 We will have the window show the following details in order (top to bottom):
-	- Actor name + icon of weapons
-	- Actor's action name + icon of action
-	- HP 
-	- Damage
-	- Hit Rate
-	- Crit Rate
-	- Target's name + icon of weapons
-	- Targets's action name + icon of action
+- Actor name + icon of weapons
+- Actor's action name + icon of action
+- HP 
+- Damage
+- Hit Rate
+- Crit Rate
+- Target's name + icon of weapons
+- Targets's action name + icon of action
 	
 All of these parameters can be drawn using drawText and drawIcon functions
-	- Battler Name + Icon of weapons
-		- The actor will be denoted by this._actionArray[1]
-		- We want to draw an icon to the left of battler's name so we will add a Window_Base._iconWidth buffer
-		- this.drawText(this._actionArray[1].name(), Window_Base._iconWidth + this.padding, this.fittingHeight(0), this.windowWidth() - Window_Base._iconWidth)
-		- To draw the icon, we need to check if the user is an enemy or not; if so we grab it using the weapons()[0] function; otherwise it will be defined by meta.srpgWeapon 
-		- if(this._actionArray[1].isActor()) { this.drawIcon(this._actionArray[1].weapons()[0].iconIndex, 0, this.fittingHeight(0)); } else if (this._actionArray[1].meta.srpgWeapon){ this.drawIcon($dataWeapons[this._actionArray[1].meta.srpgWeapon].iconIndex, 0, this.fittingHeight(0)); }
-	- Action Name + Icon of Skill
-		- We can draw the action's icon by grabbing the user (this._actionArray[1]) currentAction's item
-		- this.drawIcon(this._actionArray[1].currentAction().item().iconIndex, 0, this.fittingHeight(1)) 
-		- Skill name can be drawn by using the same function but instead of grabbing iconIndex we grab the name
-		- this.drawText(this._actionArray[1].currentAction().item().name, Window_Base._iconWidth + this.padding, this.fittingHeight(1), this.windowWidth() - Window_Base._iconWidth)
-	- HP
-		- We will draw HP in the middle. We can draw in the middle using the textWidth function that Window_Base provides 
-		- this.drawText('HP', this.windowWidth() / 2 - this.textWidth('HP') / 2, this.fittingHeight(2), this.textWidth('HP'));
-		- We will draw the user's HP on the left and target's HP on the right
-		- this.drawText(this._actionArray[1].currentAction().item().name, Window_Base._iconWidth + this.padding, this.fittingHeight(1), this.windowWidth() - Window_Base._iconWidth);
-		- We need to check if the target is not the same as the user; if so then no target info is displayed
-		- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].hp, this.windowWidth() - this.textWidth(this._targetArray[1].hp) - this.padding * 2, this.fittingHeight(2), this.textWidth(this._targetArray[1].hp), 'right'); }
-	- Damage 
-		- Damage is provided by srpgPredictionDamage(target) function
-		- Just like HP, we will draw DMG in the middle of the window
-		- We need to check if the skill can be used too by using the canUse(item) function
-		- this.drawText('DMG', this.windowWidth() / 2 - this.textWidth('DMG') / 2 - this.padding, this.fittingHeight(3), this.textWidth('DMG'));
-		- if(this._actionArray[1].canUse(this._actionArray[1].currentAction().item())) { if(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1]) !== 0) { this.drawText(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1]), 0, this.fittingHeight(3), this.textWidth(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1])), 'left'); } }
-		- if(this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { if(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1]) != 0) { if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1]), this.windowWidth() - this.padding * 2 - this.textWidth(this._actionArray[1].currentAction().srpgPredictionDamage(this._actionArray[1])), this.fittingHeight(3), this.textWidth(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1])), 'right'); } } }
-	- Hit
-		- Hit follows the same structure as damage. We get action success rate using itemHit function
-		- We also use a canUse check for the target as if the target cannot counter attack then we need to not check success rate of 'null'
-		- this.drawText('HIT', this.windowWidth() / 2 - this.textWidth('HIT') / 2 - this.padding, this.fittingHeight(4), this.textWidth('HIT'));
-		- this.drawText(Math.round(100 * this._actionArray[1].currentAction().itemHit(this._targetArray[1])), 0, this.fittingHeight(4), this.textWidth(Math.round(100 * this._actionArray[1].currentAction().itemHit(this._targetArray[1]))), 'left');
-		- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100), this.windowWidth() - this.padding * 2 - this.textWidth(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100)), this.fittingHeight(4), this.textWidth(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100)), 'right'); }
-	- Crit 
-		- Crit follows the same structure as damage. We get crit rate using itemCri function (as this incorporates critical evasion and whatever other critical hit rate modifiers present on the battler)
-		- this.drawText('CRIT', this.windowWidth() / 2 - this.textWidth('CRIT') / 2 - this.padding, this.fittingHeight(5), this.textWidth('CRIT'));
-		- this.drawText(Math.round(100 * this._actionArray[1].currentAction().itemCri(this._targetArray[1])), 0, this.fittingHeight(5), this.textWidth(Math.round(100 * this._actionArray[1].currentAction().itemCri(this._targetArray[1]))), 'left');
-		- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1])), this.windowWidth() - this.padding * 2 - this.textWidth(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1]))), this.fittingHeight(5), this.textWidth(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1]))), 'right');
+- Battler Name + Icon of weapons
+	- The actor will be denoted by this._actionArray[1]
+	- We want to draw an icon to the left of battler's name so we will add a Window_Base._iconWidth buffer
+	- this.drawText(this._actionArray[1].name(), Window_Base._iconWidth + this.padding, this.fittingHeight(0), this.windowWidth() - Window_Base._iconWidth)
+	- To draw the icon, we need to check if the user is an enemy or not; if so we grab it using the weapons()[0] function; otherwise it will be defined by meta.srpgWeapon 
+	- if(this._actionArray[1].isActor()) { this.drawIcon(this._actionArray[1].weapons()[0].iconIndex, 0, this.fittingHeight(0)); } else if (this._actionArray[1].meta.srpgWeapon){ this.drawIcon($dataWeapons[this._actionArray[1].meta.srpgWeapon].iconIndex, 0, this.fittingHeight(0)); }
+- Action Name + Icon of Skill
+	- We can draw the action's icon by grabbing the user (this._actionArray[1]) currentAction's item
+	- this.drawIcon(this._actionArray[1].currentAction().item().iconIndex, 0, this.fittingHeight(1)) 
+	- Skill name can be drawn by using the same function but instead of grabbing iconIndex we grab the name
+	- this.drawText(this._actionArray[1].currentAction().item().name, Window_Base._iconWidth + this.padding, this.fittingHeight(1), this.windowWidth() - Window_Base._iconWidth)
+- HP
+	- We will draw HP in the middle. We can draw in the middle using the textWidth function that Window_Base provides 
+	- this.drawText('HP', this.windowWidth() / 2 - this.textWidth('HP') / 2, this.fittingHeight(2), this.textWidth('HP'));
+	- We will draw the user's HP on the left and target's HP on the right
+	- this.drawText(this._actionArray[1].currentAction().item().name, Window_Base._iconWidth + this.padding, this.fittingHeight(1), this.windowWidth() - Window_Base._iconWidth);
+	- We need to check if the target is not the same as the user; if so then no target info is displayed
+	- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].hp, this.windowWidth() - this.textWidth(this._targetArray[1].hp) - this.padding * 2, this.fittingHeight(2), this.textWidth(this._targetArray[1].hp), 'right'); }
+- Damage 
+	- Damage is provided by srpgPredictionDamage(target) function
+	- Just like HP, we will draw DMG in the middle of the window
+	- We need to check if the skill can be used too by using the canUse(item) function
+	- this.drawText('DMG', this.windowWidth() / 2 - this.textWidth('DMG') / 2 - this.padding, this.fittingHeight(3), this.textWidth('DMG'));
+	- if(this._actionArray[1].canUse(this._actionArray[1].currentAction().item())) { if(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1]) !== 0) { this.drawText(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1]), 0, this.fittingHeight(3), this.textWidth(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1])), 'left'); } }
+	- if(this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { if(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1]) != 0) { if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1]), this.windowWidth() - this.padding * 2 - this.textWidth(this._actionArray[1].currentAction().srpgPredictionDamage(this._actionArray[1])), this.fittingHeight(3), this.textWidth(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1])), 'right'); } } }
+- Hit
+	- Hit follows the same structure as damage. We get action success rate using itemHit function
+	- We also use a canUse check for the target as if the target cannot counter attack then we need to not check success rate of 'null'
+	- this.drawText('HIT', this.windowWidth() / 2 - this.textWidth('HIT') / 2 - this.padding, this.fittingHeight(4), this.textWidth('HIT'));
+	- this.drawText(Math.round(100 * this._actionArray[1].currentAction().itemHit(this._targetArray[1])), 0, this.fittingHeight(4), this.textWidth(Math.round(100 * this._actionArray[1].currentAction().itemHit(this._targetArray[1]))), 'left');
+	- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100), this.windowWidth() - this.padding * 2 - this.textWidth(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100)), this.fittingHeight(4), this.textWidth(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100)), 'right'); }
+- Crit 
+	- Crit follows the same structure as damage. We get crit rate using itemCri function (as this incorporates critical evasion and whatever other critical hit rate modifiers present on the battler)
+	- this.drawText('CRIT', this.windowWidth() / 2 - this.textWidth('CRIT') / 2 - this.padding, this.fittingHeight(5), this.textWidth('CRIT'));
+	- this.drawText(Math.round(100 * this._actionArray[1].currentAction().itemCri(this._targetArray[1])), 0, this.fittingHeight(5), this.textWidth(Math.round(100 * this._actionArray[1].currentAction().itemCri(this._targetArray[1]))), 'left');
+	- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1])), this.windowWidth() - this.padding * 2 - this.textWidth(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1]))), this.fittingHeight(5), this.textWidth(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1]))), 'right');
 }
-	- Action Name + Icon of Skill (Target)
-		- If target exists (not the user), then we will draw the action name and icon as we do with the user
-		- This time we will user this._targetArray[1]
-		- We set the 'width' of the text for the action name to be windowWidth - iconWidth - 3 x padding (1 padding x 2 for each right/left side + 1 padding for space between icon)
-		- We also run a check to see if the target can use an action; if not then nothing is displayed; we achieve this using the canUse function 
-		- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(this._targetArray[1].currentAction().item().name, 0, this.fittingHeight(6), this.windowWidth() - Window_Base._iconWidth - this.padding * 3, 'right'); }
-		- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawIcon(this._targetArray[1].currentAction().item().iconIndex, this.windowWidth() - Window_Base._iconWidth - this.padding * 2, this.fittingHeight(6)); }
-	- Battler Name + Icon of weapons
-		- If target exists (not the user), then we will draw the target's name and icon as we do with the user
-		- We place the icon on the right by setting its X value to be windowWidth - iconWidth x 2
-		- this.drawIcon(this._targetArray[1].currentAction().item().iconIndex, this.windowWidth() - Window_Base._iconWidth * 2, this.fittingHeight(6));
-		- We set the name of the battler to justify to the right, and set its length to be windowWidth() - iconWidth - 3 x padding (we use 3 x padding to so it aligns with action name)
-		- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].name(), 0, this.fittingHeight(7), this.windowWidth()) - Window_Base._iconWidth - this.padding * 3, 'right'); }
-		- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { if (this._targetArray[1].isActor()) { this.drawIcon(this._targetArray[1].weapons()[0].iconIndex,  this.windowWidth() - Window_Base._iconWidth * 2, this.fittingHeight(7)); } else if (this._targetArray[1].meta.srpgWeapon) { this.drawIcon($dataWeapons[this._targetArray[1].meta.srpgWeapon].iconIndex,  this.windowWidth() - 2 * Window_Base._iconWidth, this.fittingHeight(7)); } }
-	- If we bundle all the lines of code we get the following to plug into our plugin parameter (Prediction Window Contents Lunatic Code):
-		- this.drawText(this._actionArray[1].name(), Window_Base._iconWidth + this.padding, this.fittingHeight(0), this.windowWidth() - Window_Base._iconWidth); if (this._actionArray[1].isActor()) { this.drawIcon(this._actionArray[1].weapons()[0].iconIndex, 0, this.fittingHeight(0)); } else if (this._actionArray[1].meta.srpgWeapon) { this.drawIcon($dataWeapons[this._actionArray[1].meta.srpgWeapon].iconIndex, 0, this.fittingHeight(0)); } this.drawIcon(this._actionArray[1].currentAction().item().iconIndex, 0, this.fittingHeight(1)); this.drawText(this._actionArray[1].currentAction().item().name, Window_Base._iconWidth + this.padding, this.fittingHeight(1), this.windowWidth() - Window_Base._iconWidth); this.drawText('HP', this.windowWidth() / 2 - this.textWidth('HP') / 2, this.fittingHeight(2), this.textWidth('HP')); this.drawText(this._actionArray[1].hp, 0, this.fittingHeight(2), this.textWidth(this._actionArray[1].hp), 'left'); if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].hp, this.windowWidth() - this.textWidth(this._targetArray[1].hp) - this.padding * 2, this.fittingHeight(2), this.textWidth(this._targetArray[1].hp), 'right'); } this.drawText('DMG', this.windowWidth() / 2 - this.textWidth('DMG') / 2, this.fittingHeight(3), this.textWidth('DMG')); if(this._actionArray[1].canUse(this._actionArray[1].currentAction().item())) { if(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1]) !== 0) { this.drawText(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1]), 0, this.fittingHeight(3), this.textWidth(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1])), 'left'); } } if(this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { if(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1]) != 0) { if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1]), this.windowWidth() - this.padding * 2 - this.textWidth(this._actionArray[1].currentAction().srpgPredictionDamage(this._actionArray[1])), this.fittingHeight(3), this.textWidth(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1])), 'right'); } } } this.drawText('HIT', this.windowWidth() / 2 - this.textWidth('HIT') / 2, this.fittingHeight(4), this.textWidth('HIT')); this.drawText(Math.round(100 * this._actionArray[1].currentAction().itemHit(this._targetArray[1])), 0, this.fittingHeight(4), this.textWidth(Math.round(100 * this._actionArray[1].currentAction().itemHit(this._targetArray[1]))), 'left'); if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100), this.windowWidth() - this.padding * 2 - this.textWidth(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100)), this.fittingHeight(4), this.textWidth(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100)), 'right'); } this.drawText('CRIT', this.windowWidth() / 2 - this.textWidth('CRIT') / 2, this.fittingHeight(5), this.textWidth('CRIT')); this.drawText(Math.round(100 * this._actionArray[1].currentAction().itemCri(this._targetArray[1])), 0, this.fittingHeight(5), this.textWidth(Math.round(100 * this._actionArray[1].currentAction().itemCri(this._targetArray[1]))), 'left'); if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1])), this.windowWidth() - this.padding * 2 - this.textWidth(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1]))), this.fittingHeight(5), this.textWidth(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1]))), 'right'); } if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(this._targetArray[1].currentAction().item().name, 0, this.fittingHeight(6), this.windowWidth() - Window_Base._iconWidth - this.padding * 3, 'right'); } if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawIcon(this._targetArray[1].currentAction().item().iconIndex, this.windowWidth() - Window_Base._iconWidth - this.padding * 2, this.fittingHeight(6)); }  if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].name(), 0, this.fittingHeight(7), this.windowWidth() - Window_Base._iconWidth - this.padding * 3, 'right'); } if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { if (this._targetArray[1].isActor()) { this.drawIcon(this._targetArray[1].weapons()[0].iconIndex, this.windowWidth() - Window_Base._iconWidth * 2, this.fittingHeight(7)); } else if (this._targetArray[1].meta.srpgWeapon) { this.drawIcon($dataWeapons[this._targetArray[1].meta.srpgWeapon].iconIndex, this.windowWidth() - 2 * Window_Base._iconWidth, this.fittingHeight(7)); } }
+- Action Name + Icon of Skill (Target)
+	- If target exists (not the user), then we will draw the action name and icon as we do with the user
+	- This time we will user this._targetArray[1]
+	- We set the 'width' of the text for the action name to be windowWidth - iconWidth - 3 x padding (1 padding x 2 for each right/left side + 1 padding for space between icon)
+	- We also run a check to see if the target can use an action; if not then nothing is displayed; we achieve this using the canUse function 
+	- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(this._targetArray[1].currentAction().item().name, 0, this.fittingHeight(6), this.windowWidth() - Window_Base._iconWidth - this.padding * 3, 'right'); }
+	- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawIcon(this._targetArray[1].currentAction().item().iconIndex, this.windowWidth() - Window_Base._iconWidth - this.padding * 2, this.fittingHeight(6)); }
+- Battler Name + Icon of weapons
+	- If target exists (not the user), then we will draw the target's name and icon as we do with the user
+	- We place the icon on the right by setting its X value to be windowWidth - iconWidth x 2
+	- this.drawIcon(this._targetArray[1].currentAction().item().iconIndex, this.windowWidth() - Window_Base._iconWidth * 2, this.fittingHeight(6));
+	- We set the name of the battler to justify to the right, and set its length to be windowWidth() - iconWidth - 3 x padding (we use 3 x padding to so it aligns with action name)
+	- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].name(), 0, this.fittingHeight(7), this.windowWidth()) - Window_Base._iconWidth - this.padding * 3, 'right'); }
+	- if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { if (this._targetArray[1].isActor()) { this.drawIcon(this._targetArray[1].weapons()[0].iconIndex,  this.windowWidth() - Window_Base._iconWidth * 2, this.fittingHeight(7)); } else if (this._targetArray[1].meta.srpgWeapon) { this.drawIcon($dataWeapons[this._targetArray[1].meta.srpgWeapon].iconIndex,  this.windowWidth() - 2 * Window_Base._iconWidth, this.fittingHeight(7)); } }
+- If we bundle all the lines of code we get the following to plug into our plugin parameter (Prediction Window Contents Lunatic Code):
+	- this.drawText(this._actionArray[1].name(), Window_Base._iconWidth + this.padding, this.fittingHeight(0), this.windowWidth() - Window_Base._iconWidth); if (this._actionArray[1].isActor()) { this.drawIcon(this._actionArray[1].weapons()[0].iconIndex, 0, this.fittingHeight(0)); } else if (this._actionArray[1].meta.srpgWeapon) { this.drawIcon($dataWeapons[this._actionArray[1].meta.srpgWeapon].iconIndex, 0, this.fittingHeight(0)); } this.drawIcon(this._actionArray[1].currentAction().item().iconIndex, 0, this.fittingHeight(1)); this.drawText(this._actionArray[1].currentAction().item().name, Window_Base._iconWidth + this.padding, this.fittingHeight(1), this.windowWidth() - Window_Base._iconWidth); this.drawText('HP', this.windowWidth() / 2 - this.textWidth('HP') / 2, this.fittingHeight(2), this.textWidth('HP')); this.drawText(this._actionArray[1].hp, 0, this.fittingHeight(2), this.textWidth(this._actionArray[1].hp), 'left'); if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].hp, this.windowWidth() - this.textWidth(this._targetArray[1].hp) - this.padding * 2, this.fittingHeight(2), this.textWidth(this._targetArray[1].hp), 'right'); } this.drawText('DMG', this.windowWidth() / 2 - this.textWidth('DMG') / 2, this.fittingHeight(3), this.textWidth('DMG')); if(this._actionArray[1].canUse(this._actionArray[1].currentAction().item())) { if(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1]) !== 0) { this.drawText(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1]), 0, this.fittingHeight(3), this.textWidth(this._actionArray[1].currentAction().srpgPredictionDamage(this._targetArray[1])), 'left'); } } if(this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { if(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1]) != 0) { if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1]), this.windowWidth() - this.padding * 2 - this.textWidth(this._actionArray[1].currentAction().srpgPredictionDamage(this._actionArray[1])), this.fittingHeight(3), this.textWidth(this._targetArray[1].currentAction().srpgPredictionDamage(this._actionArray[1])), 'right'); } } } this.drawText('HIT', this.windowWidth() / 2 - this.textWidth('HIT') / 2, this.fittingHeight(4), this.textWidth('HIT')); this.drawText(Math.round(100 * this._actionArray[1].currentAction().itemHit(this._targetArray[1])), 0, this.fittingHeight(4), this.textWidth(Math.round(100 * this._actionArray[1].currentAction().itemHit(this._targetArray[1]))), 'left'); if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100), this.windowWidth() - this.padding * 2 - this.textWidth(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100)), this.fittingHeight(4), this.textWidth(Math.round(this._targetArray[1].currentAction().itemHit(this._actionArray[1]) * 100)), 'right'); } this.drawText('CRIT', this.windowWidth() / 2 - this.textWidth('CRIT') / 2, this.fittingHeight(5), this.textWidth('CRIT')); this.drawText(Math.round(100 * this._actionArray[1].currentAction().itemCri(this._targetArray[1])), 0, this.fittingHeight(5), this.textWidth(Math.round(100 * this._actionArray[1].currentAction().itemCri(this._targetArray[1]))), 'left'); if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1])), this.windowWidth() - this.padding * 2 - this.textWidth(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1]))), this.fittingHeight(5), this.textWidth(Math.round(100 * this._targetArray[1].currentAction().itemCri(this._actionArray[1]))), 'right'); } if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawText(this._targetArray[1].currentAction().item().name, 0, this.fittingHeight(6), this.windowWidth() - Window_Base._iconWidth - this.padding * 3, 'right'); } if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].canUse(this._targetArray[1].currentAction().item())) { this.drawIcon(this._targetArray[1].currentAction().item().iconIndex, this.windowWidth() - Window_Base._iconWidth - this.padding * 2, this.fittingHeight(6)); }  if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { this.drawText(this._targetArray[1].name(), 0, this.fittingHeight(7), this.windowWidth() - Window_Base._iconWidth - this.padding * 3, 'right'); } if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) { if (this._targetArray[1].isActor()) { this.drawIcon(this._targetArray[1].weapons()[0].iconIndex, this.windowWidth() - Window_Base._iconWidth * 2, this.fittingHeight(7)); } else if (this._targetArray[1].meta.srpgWeapon) { this.drawIcon($dataWeapons[this._targetArray[1].meta.srpgWeapon].iconIndex, this.windowWidth() - 2 * Window_Base._iconWidth, this.fittingHeight(7)); } }
 
 ### Background window image
 We can make things nicer by using a background window image instead of the default window. This plugin comes built in sprites that the user can use: this._bust/this._bust2 and this._background/this._background2/this._background3
-	- Before we add a background image, the window layer opacity should be set to 0 (this can be done via plugin parameter)
-	- This plugin will make this._bust / this._background sprites invisible when a window (prediction or quick status) is inactivated. However, it is up to the user to create the sprite first and set its visible properties.
-		- We can add this code to the contents lunatic code plugin parameter
-		- To create a sprite, we can use the following code:
-			- this._background = new Sprite(ImageManager.loadSystem('PredictionWindow'));
-			- this.addChildAt(this._background, 1);
-		- The above code will set the background sprite to an image in the /System/ folder with the name PredictionWindow
-		- We can adjust the background sprite properties using the following parameters:
-			- Anchor Points: This is where the image reference X,Y coordinates will be RELATIVE to the window
-				- this._background.anchor.x = 0.5
-				- this._background.anchor.y = 0.5 (this makes the 'center' of the image as the anchor point)
-			- this._background.x = Graphics.boxWidth / 2  (this is relative to the WINDOW, so if x = 0, then it will be pinned to the top left of the WINDOW)
-			- this._background.y = Graphics.boxHeight / 2
-			- this._background.scale.x = -1 (this flips the image)
-			- Other useful sprite functions:
-				this._background.setBlendColor([r,g,b,a]) or setColorTone([r,g,b,a])
-				this._background.visible = true/false
-				this._background.setFrame (x, y, height, width) - Useful for spritesheets
-		- Once our background sprite is set, a new sprite will be create whenever the code is run. This however will cause issues as duplicate sprites will be produced. We can fix this by checking if a background sprite exists or not; if it does then we simply set it to be visible (instead of creating a new one)
-		- Full code (add to predictions lunatic code):
-			- if(!this._background) { 
-				this._background = new Sprite(ImageManager.loadSystem('PredictionWindow'));
-				this.addChildAt(this._background, 1);
-			} else {
-				this._background = true;
-			}
-		- To try this example, copy the [PredictionWindow image](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/PredictionWindow.png) from this repository and use the fire emblem prediction code as discussed earlier in this document
-	- The background sprite is designed to be a 'window'
-	- The bust sprite is designed to be either the battler's face (easier to use drawActorFace function though) or custom bust (aka IrinaVisualNovelBust or Mog Window Effects)
-	- The addChildAt(A, Z) is important for Z-layer properties. The lower the Z value, the further behind the sprite is. Bust Z = 2 and Background Z = 1 works well.
+- Before we add a background image, the window layer opacity should be set to 0 (this can be done via plugin parameter)
+- This plugin will make this._bust / this._background sprites invisible when a window (prediction or quick status) is inactivated. However, it is up to the user to create the sprite first and set its visible properties.
+	- We can add this code to the contents lunatic code plugin parameter
+	- To create a sprite, we can use the following code:
+		- this._background = new Sprite(ImageManager.loadSystem('PredictionWindow'));
+		- this.addChildAt(this._background, 1);
+	- The above code will set the background sprite to an image in the /System/ folder with the name PredictionWindow
+	- We can adjust the background sprite properties using the following parameters:
+		- Anchor Points: This is where the image reference X,Y coordinates will be RELATIVE to the window
+			- this._background.anchor.x = 0.5
+			- this._background.anchor.y = 0.5 (this makes the 'center' of the image as the anchor point)
+		- this._background.x = Graphics.boxWidth / 2  (this is relative to the WINDOW, so if x = 0, then it will be pinned to the top left of the WINDOW)
+		- this._background.y = Graphics.boxHeight / 2
+		- this._background.scale.x = -1 (this flips the image)
+		- Other useful sprite functions:
+			this._background.setBlendColor([r,g,b,a]) or setColorTone([r,g,b,a])
+			this._background.visible = true/false
+			this._background.setFrame (x, y, height, width) - Useful for spritesheets
+	- Once our background sprite is set, a new sprite will be create whenever the code is run. This however will cause issues as duplicate sprites will be produced. We can fix this by checking if a background sprite exists or not; if it does then we simply set it to be visible (instead of creating a new one)
+	- Full code (add to predictions lunatic code):
+		- if(!this._background) { 
+			this._background = new Sprite(ImageManager.loadSystem('PredictionWindow'));
+			this.addChildAt(this._background, 1);
+		} else {
+			this._background = true;
+		}
+	- To try this example, copy the [PredictionWindow image](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/PredictionWindow.png) from this repository and use the fire emblem prediction code as discussed earlier in this document
+- The background sprite is designed to be a 'window'
+- The bust sprite is designed to be either the battler's face (easier to use drawActorFace function though) or custom bust (aka IrinaVisualNovelBust or Mog Window Effects)
+- The addChildAt(A, Z) is important for Z-layer properties. The lower the Z value, the further behind the sprite is. Bust Z = 2 and Background Z = 1 works well.
 
 ![Example](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/Example3.png?raw=true)
