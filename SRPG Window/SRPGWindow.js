@@ -33,7 +33,12 @@
  * @desc Enable a quick preview of units when selected 
  * @default true 
   *
-* @param Quick Status Hover 
+* @param SRPG Status Enable
+ * @parent Quick Status 
+ * @desc If true, SRPG status for enemies when selected on map will be shown outside of prediction window 
+ * @default true 
+ *
+ * @param Quick Status Hover 
  * @parent Quick Status 
  * @desc If set to true, quick status is shown over selected unit instead of a set X/Y
  * @default true 
@@ -239,7 +244,13 @@ this.drawText(this._battler.level, 20 + 2.6 * Math.floor((this.width - this.padd
     //Disable Status showing up 
     Window_SrpgStatus.prototype.open = function () {
         if (!this.isOpen()) {
-            this._opening = false;
+            if($gameSystem.isSubBattlePhase() == 'battle_window' && eval(parameters['SRPG Status Enable'])) {
+				this._opening = false;
+			} else if (!eval(parameters['SRPG Status Enable'])) {
+				this._opening = false;
+			} else {
+				this._opening = true;
+			}
         }
         this._closing = false;
     };
