@@ -311,3 +311,30 @@ We can make things nicer by using a background window image instead of the defau
 - The addChildAt(A, Z) is important for Z-layer properties. The lower the Z value, the further behind the sprite is. Bust Z = 2 and Background Z = 1 works well.
 
 ![Example](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/Example3.png?raw=true)
+
+
+## Adding Yanfly Weapon Durability
+If you use the Yanfly Weapon Durability plugin, we can add a number to the weapon icon (shown in the prediction window in the Fire Emblem example) to denote the remaining durability of the weapon. To keep it simple, the instructions below work independent (you can just tack it on the end of your lunatic code); you could streamline the code by integrating it into the code example as some of the conditional checks we perform are already done by existing code. 
+
+![Example](https://github.com/boomyville/RMMV/blob/master/SRPG%20Window/WeaponDurability.png?raw=true)
+
+Here is an explanation of the code:
+- Firstly we change the font size to tiny using this.contents.fontSize = tinySize (like 12)
+- We then check if the equipped weapon by the this._actionArray[1] or this._targetArray[1] is:
+	- Exist (Unit actually has a weapon)
+	- Has durability of 0 or more (unit with no weapons will result in a durability of -1 which we can omit)
+	- For targets, we will check if they can actually act (if not, then we won't show weapon icon and thus not show its durability)
+	- For targets, we also want to make sure the active unit is not also a target so we don't draw their information twice
+- We get durability using the DataManager.getDurability(item)
+- Note that enemy weapon durability is not stored by srpg_core so it will always return a -1 value 
+- We then reset the font using a Yanfly Core function: this.contents.fontSize = this.standardFontSize(); 
+
+The complete code:
+
+this.contents.fontSize = 12;
+if(DataManager.getDurability(this._actionArray[1].isActor() ? this._actionArray[1].weapons()[0] : $dataWeapons[Number(this._actionArray[1].enemy().meta.srpgWeapon)]) >= 0) {  this.drawText(DataManager.getDurability(this._actionArray[1].isActor() ? this._actionArray[1].weapons()[0] : $dataWeapons[Number(this._actionArray[1].enemy().meta.srpgWeapon)]) ,16, 16, this.textWidth("000")); }
+if (this._actionArray[1] != this._targetArray[1] && this._targetArray[1].currentAction() !== null) {
+if(DataManager.getDurability(this._targetArray[1].isActor() ? this._targetArray[1].weapons()[0] : $dataWeapons[Number(this._targetArray[1].enemy().meta.srpgWeapon)]) >= 0) { this.drawText(DataManager.getDurability(this._targetArray[1].isActor() ? this._targetArray[1].weapons()[0] : $dataWeapons[Number(this._targetArray[1].enemy().meta.srpgWeapon)]), this.windowWidth() - Window_Base._iconWidth * 2 + 16, this.fittingHeight(7) + 16, this.textWidth("000"));
+}
+}
+this.contents.fontSize = this.standardFontSize(); 
