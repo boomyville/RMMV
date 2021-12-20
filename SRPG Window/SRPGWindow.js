@@ -38,6 +38,11 @@
  * @desc If true, SRPG status for enemies when selected on map will be shown outside of prediction window 
  * @default true 
  *
+ * @param Hide Quick Status With Message
+  * @parent Quick Status 
+ * @desc Hides the quick status window when a Game_Message window is active 
+ * @default true 
+  *
  * @param Quick Status Hover 
  * @parent Quick Status 
  * @desc If set to true, quick status is shown over selected unit instead of a set X/Y
@@ -450,6 +455,8 @@ this.drawText(this._battler.level, 20 + 2.6 * Math.floor((this.width - this.padd
                 this._mapSrpgActorCommandStatusWindow.clearBattler();
             }
         }
+		
+		
         //Check highlighted target
         var highlightedTarget;
         if ($gameTemp.activeEvent()) {
@@ -510,6 +517,13 @@ this.drawText(this._battler.level, 20 + 2.6 * Math.floor((this.width - this.padd
                 this._mapSrpgActorCommandStatusWindow.y = eval(parameters['Quick Status Y']);
             }
         }
+		
+				
+		//Remove quick status window if gameMessage present
+		if($gameMessage._texts.length > 0 && eval(parameters['Hide Quick Status With Message'])) {
+			 this._mapSrpgActorCommandStatusWindow.clearBattler();
+		}
+		
     };
     //Remove sprites when quick status window is closed
     var _Window_SrpgActorCommandStatus_clear = Window_SrpgActorCommandStatus.prototype.clearBattler;
