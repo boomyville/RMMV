@@ -67,4 +67,12 @@
 		// SRPG EDIT END
 		return actor && actor.meetsUsableItemConditions(item);
 	};
+	var _meetsItemConditions = Game_BattlerBase.prototype.meetsItemConditions;
+	Game_BattlerBase.prototype.meetsItemConditions = function(item) {
+		for(var i = 0; i < this._equipItemSlots.length; i++) {
+			if(this._equipItemSlots[i]._itemId == item.id) {
+				return true;
+			}
+		}
+    _meetsItemConditions.call(this, item);
 })();
