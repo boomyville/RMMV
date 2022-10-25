@@ -53,152 +53,19 @@
     var _SRPG_SceneMap_update = Scene_Map.prototype.update;
     Scene_Map.prototype.update = function () {
         _SRPG_SceneMap_update.call(this);
-												
-				   
-		 
-																									 
-				   
-		 
-										   
-												
-									
-				   
-		 
-													
-													   
-									   
-				   
-		 
-							 
-															 
-					  
-																								
-															  
-												 
-			 
-				
-																							   
-														 
-																						  
-																									  
-				 
-												  
-			 
-		 
-									
-																   
-					  
-																											
-																  
-			 
-				
-																										   
-														
-															 
-			 
-		 
-								   
-																		 
-					
-								 
-		 
-					  
-																														
-																			 
-																															
-																										   
-																																									   
-																										
-																	
-																															   
-																																  
-							
-																																			
-					 
-																												   
-																													
-																																			
-							
-																						
-					 
-						
-																																	 
-																																	
-				 
-			 
-				
-																													   
-																	 
-																						  
-																														
-				 
-			 
-		 
-										
-															 
-					  
-																					   
-										  
-					   
-			 
-																								
-															  
-												 
-			 
-																										
-																		   
-													 
-			 
-																								
-														 
-			 
-				
-																							   
-														 
-																						  
-																											
-				 
-												  
-			 
-																									   
-															 
-																						  
-																												
-				 
-													  
-			 
-																							   
-													   
-																						  
-																											
-				 
-												  
-													   
-			 
-		 
-												
-				   
-		 
         //Process Direction Selection after wait command #Boomy
         if ($gameSystem.isSubBattlePhase() === 'wait_direction_selection') {
             this.srpgWaitDirectionSelection();
             return;
         }
-						 
-																				   
-										 
-											
-				   
-		 
         //Process Post-battle Direction Selection #Boomy
         if ($gameSystem.isSubBattlePhase() === 'pre_direction_selection') {
-			this.srpgPostBattleLunaticCode();
+            this.srpgPostBattleLunaticCode();
             this.preBattleSetDirection();
             return;
         }
         //Process Post-battle Direction Selection #Boomy
         if ($gameSystem.isSubBattlePhase() === 'direction_selection') {
-															
             this.srpgBattlerDeadAfterBattle();
             //Set battle direction #Boomy
             if ($gameTemp._areaTargets !== undefined) { //Set a check if there are multiple actions to occur due to an AoE effect
@@ -212,85 +79,50 @@
         }
         //Process Post-battle 
         if ($gameSystem.isSubBattlePhase() == 'pre_post_battle') {
-			this.srpgBattlerDeadAfterBattle(); //This function checks if either attacker or defender has been knocked out and if so set appropriate variables 
-			this.preBattleSetDirection();
+            this.srpgBattlerDeadAfterBattle(); //This function checks if either attacker or defender has been knocked out and if so set appropriate variables 
+            this.preBattleSetDirection();
             $gameSystem.setSubBattlePhase('after_battle');
             return;
         }
-		
-																											   
-											 
-																								  
-					
-														
-			 
-		 
-							 
-																 
-																		  
-												  
-					   
-																			  
-											   
-					   
-																				
-												
-					   
-			 
-		 
-							
-															
-																	 
-											  
-					   
-																		 
-										   
-					   
-																		   
-												
-					   
-			 
-		 
     };
     //This function runs lunatic code prior to direction_selection phase but after a battle 
     Scene_Map.prototype.srpgPostBattleLunaticCode = function () {
-		if($gameTemp.activeEvent()) {
-        if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isActor()) {
-            eval(_directionSelectionLunaticCode);
-            if (_directionSelection && !($gameSwitches.value(_enableSwitch) == false && _enableSwitch !== "")) {
-                $gamePlayer._x = $gameTemp.activeEvent().posX();
-                $gamePlayer._y = $gameTemp.activeEvent().posY();
-                if (_directionSelectionCharacterName !== -1) {
-                    $gamePlayer._characterName = _directionSelectionCharacterName;
-					
+        if ($gameTemp.activeEvent()) {
+            if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isActor()) {
+                eval(_directionSelectionLunaticCode);
+                if (_directionSelection && !($gameSwitches.value(_enableSwitch) == false && _enableSwitch !== "")) {
+                    $gamePlayer._x = $gameTemp.activeEvent().posX();
+                    $gamePlayer._y = $gameTemp.activeEvent().posY();
+                    if (_directionSelectionCharacterName !== "-1") {
+                        $gamePlayer._characterName = _directionSelectionCharacterName;
+                    }
+                    $gameSystem.setSubBattlePhase('direction_selection');
+                } else {
+                    $gameSystem.setSubBattlePhase('after_battle');
                 }
-				$gameSystem.setSubBattlePhase('direction_selection');
             } else {
                 $gameSystem.setSubBattlePhase('after_battle');
             }
         } else {
             $gameSystem.setSubBattlePhase('after_battle');
         }
-		}else {
-            $gameSystem.setSubBattlePhase('after_battle');
-        }
     }
     //This function checks for user input and applies direction after a wait command #Boomy
     Scene_Map.prototype.srpgWaitDirectionSelection = function () {
-		if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isEnemy()) {
+        if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isEnemy()) {
             //Direction Selection for enemy
-			this.preBattleSetDirection()
+            this.preBattleSetDirection()
             this.srpgAfterAction();
         } else if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isActor() && $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isDead()) {
             $gameSystem.setSubBattlePhase('after_battle');
         } else if (eval(_directionSelection) == false) {
             //Skip direction selection
-			this.srpgAfterAction();
+            this.srpgAfterAction();
         } else if ($gameSwitches.value(_enableSwitch) == false && _enableSwitch !== "") {
-			this.srpgAfterAction();
-		} else {
-			//Set direction of gamePlayer to be the same as active unit if direction indicator is set 
-            if (_directionSelectionCharacterName !== -1) {
+            this.srpgAfterAction();
+        } else {
+            //Set direction of gamePlayer to be the same as active unit if direction indicator is set 
+            if (_directionSelectionCharacterName !== "-1") {
                 $gamePlayer._direction = $gameTemp.activeEvent()._direction;
             }
             //Set direction of unit based on position of mouse 
@@ -323,7 +155,7 @@
             }
             //Confirm direction upon ok 
             if (Input.isTriggered('ok')) {
-                if (_directionSelectionCharacterName !== -1) {
+                if (_directionSelectionCharacterName !== "-1") {
                     $gamePlayer._characterName = _srpgSet;
                 }
                 this.srpgAfterAction();
@@ -345,7 +177,7 @@
                                 $gameTemp.activeEvent()._direction = 2;
                             }
                         }
-                        if (_directionSelectionCharacterName !== -1) {
+                        if (_directionSelectionCharacterName !== "-1") {
                             $gamePlayer._characterName = _srpgSet;
                         }
                         this.srpgAfterAction();
@@ -359,30 +191,30 @@
     Scene_Map.prototype.srpgPostBattleDirectionSelection = function () {
         if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isEnemy()) {
             //Direction Selection for enemy
-			this.preBattleSetDirection();
+            this.preBattleSetDirection();
             $gameSystem.setSubBattlePhase('after_battle');
         } else if (eval(_directionSelection) == false) {
             //Skip direction selection
             $gameSystem.setSubBattlePhase('after_battle');
         } else if (!$gameTemp.activeEvent()) {
-            if (_directionSelectionCharacterName !== -1) {
+            if (_directionSelectionCharacterName !== "-1") {
                 $gamePlayer._characterName = _srpgSet;
             }
             $gameSystem.setSubBattlePhase('after_battle');
         } else if ($gameSwitches.value(_enableSwitch) == false && _enableSwitch !== "") {
-            if (_directionSelectionCharacterName !== -1) {
+            if (_directionSelectionCharacterName !== "-1") {
                 $gamePlayer._characterName = _srpgSet;
             }
             $gameSystem.setSubBattlePhase('after_battle');
         } else if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isActor() && $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isDead()) {
-            if (_directionSelectionCharacterName !== -1) {
+            if (_directionSelectionCharacterName !== "-1") {
                 $gamePlayer._characterName = _srpgSet;
             }
             $gameSystem.setSubBattlePhase('after_battle');
         } else {
             $gameTemp.clearMoveTable(); //Remove the movemenet tiles that show where a unit can move/attack (this normally occurs in after_battle)
             //Set direction of gamePlayer to be the same as active unit if direction indicator is set 
-            if (_directionSelectionCharacterName !== -1) {
+            if (_directionSelectionCharacterName !== "-1") {
                 $gamePlayer._direction = $gameTemp.activeEvent()._direction;
             }
             //Set direction of unit based on position of mouse 
@@ -413,7 +245,7 @@
             }
             //Confirm direction upon ok 
             if (Input.isTriggered('ok')) {
-                if (_directionSelectionCharacterName !== -1) {
+                if (_directionSelectionCharacterName !== "-1") {
                     $gamePlayer._characterName = _srpgSet;
                 }
                 this.srpgAfterAction();
@@ -433,7 +265,7 @@
                         $gameTemp.activeEvent()._direction = 2;
                     }
                 }
-                if (_directionSelectionCharacterName !== -1) {
+                if (_directionSelectionCharacterName !== "-1") {
                     $gamePlayer._characterName = _srpgSet;
                 }
                 this.srpgAfterAction();
@@ -444,7 +276,7 @@
     Scene_Map.prototype.commandWait = function () {
         var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
         //Shoukang MoveAfterAction compatability
-		//If actor can still move, ignore direction selection
+        //If actor can still move, ignore direction selection
         if (typeof actor.canMoveAfterAction !== "undefined") {
             if (actor.canMoveAfterAction() && actor.SrpgRemainingMove() > 0 && !actor.isSrpgAfterActionMove() && !$gameTemp.isTurnEndFlag()) {
                 this.srpgAfterAction();
@@ -459,7 +291,7 @@
                 if (_directionSelection) {
                     $gamePlayer._x = $gameTemp.activeEvent().posX();
                     $gamePlayer._y = $gameTemp.activeEvent().posY();
-                    if (_directionSelectionCharacterName !== -1) {
+                    if (_directionSelectionCharacterName !== "-1") {
                         $gamePlayer._characterName = _directionSelectionCharacterName;
                     }
                 }
@@ -477,7 +309,7 @@
             if (_directionSelection) {
                 $gamePlayer._x = $gameTemp.activeEvent().posX();
                 $gamePlayer._y = $gameTemp.activeEvent().posY();
-                if (_directionSelectionCharacterName !== -1) {
+                if (_directionSelectionCharacterName !== "-1") {
                     $gamePlayer._characterName = _directionSelectionCharacterName;
                 }
             }
@@ -504,20 +336,20 @@
             this._srpgBattleResultWindow.close();
         }
         this.replayBgmAndBgs();
-		if($gameSystem.isSRPGMode()) {
-        //MoveAfterAction compatability
-        if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1] !== undefined) {
-			if($gameSystem._isBattlePhase == "actor_phase") {
-            if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].srpgTurnEnd() && !$gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isSrpgAfterActionMove() && $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].SrpgRemainingMove() && !$gameTemp.isTurnEndFlag()) {
-				$gameSystem.setSubBattlePhase('pre_post_battle');
-            } else {
-				$gameSystem.setSubBattlePhase('pre_direction_selection');
+        if ($gameSystem.isSRPGMode()) {
+            //MoveAfterAction compatability
+            if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1] !== undefined) {
+                if ($gameSystem._isBattlePhase == "actor_phase") {
+                    if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].srpgTurnEnd() && !$gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].isSrpgAfterActionMove() && $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].SrpgRemainingMove() && !$gameTemp.isTurnEndFlag()) {
+                        $gameSystem.setSubBattlePhase('pre_post_battle');
+                    } else {
+                        $gameSystem.setSubBattlePhase('pre_direction_selection');
+                    }
+                } else {
+                    $gameSystem.setSubBattlePhase('pre_post_battle');
+                }
             }
-			} else {
-				$gameSystem.setSubBattlePhase('pre_post_battle');
-			}
         }
-		}
     };
     //戦闘終了処理のアップデート
     var __SRPG_BattleManager_updateBattleEnd = BattleManager.updateBattleEnd;
@@ -550,16 +382,14 @@
         }
         _updateCallMenu_MB.call(this);
     };
-	
-	//Make User face target when selecting 
-	var _setTargetEvent = Game_Temp.prototype.setTargetEvent;
-	Game_Temp.prototype.setTargetEvent = function(event) {
-		_setTargetEvent.call(this, event);
-		if($gameSystem.isSubBattlePhase() == 'actor_target' && $gameTemp.activeEvent() != $gameTemp.targetEvent() ) {
-		$gameTemp.activeEvent().setDirection($gameTemp.activeEvent().dirTo($gameTemp.targetEvent().posX(), $gameTemp.targetEvent().posY()));
-		}
-	};
-	
+    //Make User face target when selecting 
+    var _setTargetEvent = Game_Temp.prototype.setTargetEvent;
+    Game_Temp.prototype.setTargetEvent = function (event) {
+        _setTargetEvent.call(this, event);
+        if ($gameSystem.isSubBattlePhase() == 'actor_target' && $gameTemp.activeEvent() != $gameTemp.targetEvent()) {
+            $gameTemp.activeEvent().setDirection($gameTemp.activeEvent().dirTo($gameTemp.targetEvent().posX(), $gameTemp.targetEvent().posY()));
+        }
+    };
     //-----------------------------------------------------------------------------
     /**
      * The static class that handles input data from the mouse and touchscreen.
