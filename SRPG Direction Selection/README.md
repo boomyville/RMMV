@@ -32,5 +32,5 @@ isSubBattlePhase normally cycles through: normal (nothing selected) --> move -->
 This script changes _SRPG_BattleManager_endBattle function to change the flow from battle --> pre_direction_selection --> direction_selection --> after_battle. During pre_direction_selection, a few checks are undertaken and the outcome will either lead to after battle or direction_selection phase
 
 # How to use?
-Install plugin. Fiddle with plugin parameters. Download the included $ArrowIndicator.png if you want to give the player visual feedback when choosing a selection and change the After Battle Character Image plugin parameter
+Install plugin. Fiddle with plugin parameters. Download the included $ArrowIndicator.png if you want to give the player visual feedback when choosing a selection and change the After Battle Character Image plugin parameter. Make sure you have SRPG_AoE.js and SRPG_PositionEffects.js as this plugin uses some functions from those plugins. Also does not really work with map battle.
 
