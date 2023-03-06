@@ -171,18 +171,24 @@
             } else {
                 this.bitmap.fillAll("red");
             }
-        } else {
-            this.bitmap.fillAll('blue');
-        }
+        } else if (attackFlag === false) {	
+			this.bitmap.fillAll('blue');
+		}
+		else if (attackFlag === 'AoE') {
+			this.bitmap.fillAll('yellow'); 
+		}
+		
     };
     Sprite_SrpgAoE.prototype.drawCell = function (bitmap, x, y, tileWidth, tileHeight) {
         if ($gameTemp.activeEvent()) {
             if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction() !== undefined) {
-                if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange !== undefined) {
-                    var tileX = x / tileWidth;
-                    var tileY = y / tileHeight;
-                    tileX = tileX - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posX();
-                    tileY = tileY - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posY();
+                if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item()) {
+                    if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange !== undefined) {
+                        var tileX = x / tileWidth;
+                        var tileY = y / tileHeight;
+                        tileX = tileX - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posX();
+                        tileY = tileY - Number($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1].currentAction().item().meta.srpgAreaRange) + $gamePlayer.posY();
+                    }
                 }
             }
         }
