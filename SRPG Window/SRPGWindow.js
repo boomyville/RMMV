@@ -556,7 +556,7 @@ this.drawText(this._battler.level, 20 + 2.6 * Math.floor((this.width - this.padd
                 this.drawIcon(icons[i], x + width - Window_Base._iconWidth * (i + 1), y + 2);
             }
         }
-	if(Yanfly) {
+	if(typeof Yanfly !== 'undefined') {
         if (Yanfly.BSC.Window_Base_drawActorIcons) {
             this.drawActorIconsTurnsEx(actor, x, y, width, align);
         }
