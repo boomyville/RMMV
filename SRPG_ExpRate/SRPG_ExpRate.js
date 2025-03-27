@@ -7,11 +7,15 @@
  * 
  * @param Average AoE Target EXP
  * @type boolean
- * @desc Split EXP equal to number of targets. Note that SRPG_AoEAnimation.js already splits exp when mulltiple actors are targeted.
+ * @desc Split EXP equal to number of targets. Note that SRPG_AoEAnimation.js already splits exp when multiple actors are targeted.
  * @default false
  * 
+ * @param Base EXP
+ * @desc Lunatic code formula. Can use parameters such as actor, enemy and defaultExp
+ * @default defaultExp
+ * 
  * @param EXP multiplier
- * @desc Lunatic code formula. Can use parameters such as user and targetsAverageLevel, targetsMaxLevel, targetsMinLevel 
+ * @desc Lunatic code formula. Can use parameters such as actor, enemy and targetsAverageLevel, targetsMaxLevel, targetsMinLevel 
  * @default 1
  *  
   * @help
@@ -43,6 +47,13 @@
             if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[0] == "actor") {
                 //If target is enemy
                 if ($gameSystem.EventToUnit($gameTemp.targetEvent().eventId())[0] == "enemy") {
+                    //Create variables for user and target
+                    var actor = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
+                    var enemy = $gameSystem.EventToUnit($gameTemp.targetEvent().eventId())[1];
+                    //Set default EXP 
+                    if (parameters['Base EXP'] !== "defaultExp") {
+                        defaultExp = eval(parameters['Base EXP']);
+                    }
                     //Reduce exp gain if average parameter is Set
                     if (eval(parameters['Average AoE Target EXP'])) {
                         defaultExp = defaultExp / ($gameTemp._areaTargets.length + 1);
@@ -52,7 +63,7 @@
                         //Work out targetsAverageLevel, targetsMaxLevel and targetsMinLevel
                         var levelArray = [Number($gameSystem.EventToUnit($gameTemp.targetEvent().eventId())[1].level !== undefined ? $gameSystem.EventToUnit($gameTemp.targetEvent().eventId())[1].level : $gameSystem.EventToUnit($gameTemp.targetEvent().eventId())[1].enemy().meta.srpgLevel)];
                         for (var i = 0; i < $gameTemp._areaTargets.length; i++) {
-                            console.log($gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].enemy().meta.srpgLevel);
+                            //console.log($gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].enemy().meta.srpgLevel);
                             var level = Number($gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].level !== undefined ? $gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].level : $gameSystem.EventToUnit($gameTemp._areaTargets[i].event.eventId())[1].enemy().meta.srpgLevel);
                             levelArray.push(level);
                         }
@@ -60,7 +71,6 @@
                         var targetsAverageLevel = average(levelArray);
                         var targetsMaxLevel = Math.max(...levelArray);
                         var targetsMinLevel = Math.min(...levelArray);
-                        var user = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
                         defaultExp *= eval(parameters['EXP multiplier']);
                     }
                 }
@@ -68,7 +78,16 @@
             //User is an enemy 
             if ($gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[0] == "enemy") {
                 //Using AoEAnimation.js, exp is averaged when multiple actors are targetted
-                //Apply multiplier to EXP if EXP multiplier is set 
+                //Apply multiplier to EXP if EXP multiplier is set
+                    
+                //Create variables for user and target
+                var enemy = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
+                var actor = $gameSystem.EventToUnit($gameTemp.targetEvent().eventId())[1];
+                //Set default EXP 
+                if (parameters['Base EXP'] !== "defaultExp") {
+                    defaultExp = eval(parameters['Base EXP']);
+                }
+                
                 if (parameters['EXP multiplier'] !== 1) {
                     //Work out targetsAverageLevel, targetsMaxLevel and targetsMinLevel
                     var levelArray = [Number($gameSystem.EventToUnit($gameTemp.targetEvent().eventId())[1].level !== undefined ? $gameSystem.EventToUnit($gameTemp.targetEvent().eventId())[1].level : $gameSystem.EventToUnit($gameTemp.targetEvent().eventId())[1].enemy().meta.srpgLevel)];
@@ -79,11 +98,7 @@
                     var average = levelArray => levelArray.reduce((p, c) => p + c, 0) / levelArray.length;
                     var targetsAverageLevel = average(levelArray);
                     var targetsMaxLevel = Math.max(...levelArray);
-                    var targetsMinLevel = Math.min(...levelArray);
-                    var user = $gameSystem.EventToUnit($gameTemp.activeEvent().eventId())[1];
-                    if (user.level == undefined) {
-                        user.level = user.enemy().meta.srpgLevel;
-                    }
+                    var targetsMinLevel = Math.min(...levelArray); 
                     defaultExp *= 1 / eval(parameters['EXP multiplier']);
                 }
             }
