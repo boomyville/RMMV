@@ -99,7 +99,7 @@
                     var targetsAverageLevel = average(levelArray);
                     var targetsMaxLevel = Math.max(...levelArray);
                     var targetsMinLevel = Math.min(...levelArray); 
-                    defaultExp *= 1 / eval(parameters['EXP multiplier']);
+                    defaultExp *= eval(parameters['EXP multiplier']);
                 }
             }
             this._rewards.exp = defaultExp;
